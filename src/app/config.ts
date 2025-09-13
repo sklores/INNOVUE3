@@ -19,3 +19,16 @@ export const POLL = {
     accountsPayable: 10000,
     bankBalance: 5000,
   };
+  // Which direction is "good" for each metric (affects color inversion)
+export const METRIC_DIRECTION: Record<string, "up" | "down"> = {
+    sales: "up",
+    profit: "up",
+    laborPct: "down",       // lower is better
+    cogs: "down",           // lower is better
+    onlineViews: "up",
+    reviewScore: "up",
+    fixedCost: "down",      // often treated as lower-is-better in visuals
+    accountsPayable: "down",
+    bankBalance: "up",
+    newItems: "up",
+  };

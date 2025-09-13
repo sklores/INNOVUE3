@@ -1,15 +1,49 @@
-/* src/styles/global.css */
-:root { --ink:#0f1720; --muted:#667085; --card:#fff; --bg:#f5f7fb; }
-*{box-sizing:border-box} html,body,#root{height:100%} body{margin:0;color:var(--ink);background:var(--bg);font-family:ui-sans-serif,system-ui,-apple-system,"Inter",Arial,sans-serif}
-.app{max-width:900px;margin:0 auto;padding:16px}
-.card{background:var(--card);border-radius:14px;box-shadow:0 1px 2px rgba(0,0,0,.06)}
-.row{display:grid;grid-template-columns:1fr;gap:12px}@media(min-width:640px){.row{grid-template-columns:repeat(2,1fr)}}
-
-/* src/styles/topbar.css */
-/* (reserved for hero later) */
-
 /* src/styles/kpi.css */
-/* (reserved for KPI tiles later) */
 
-/* src/styles/bottom.css */
-/* (reserved for bottom bar later) */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  @media (min-width: 640px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (min-width: 980px) {
+    .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  
+  .kpi {
+    padding: 16px;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    min-height: 92px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  
+  .kpi-label {
+    font-size: 12px;
+    color: var(--muted, #667085);
+    margin-bottom: 6px;
+  }
+  
+  .kpi-value {
+    font-size: 26px;
+    font-weight: 800;
+  }
+  
+  .kpi-bar-outer {
+    margin-top: 12px;
+    height: 8px;
+    background: #eef2f7;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .kpi-bar-inner {
+    height: 100%;
+    width: 0%;
+    background: #9bd5c8; /* overwritten inline */
+    transition: width 220ms ease, background 220ms ease;
+  }
