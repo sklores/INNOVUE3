@@ -1,3 +1,4 @@
+// src/data/adapters.ts
 import { sheetMap } from "./sheetMap";
 
 export type KPIData = {
@@ -25,12 +26,6 @@ export type Overrides = {
   newItemsOverride?: number;
 };
 
-export type WeatherData = {
-  mode: "clear" | "cloudy" | "rain" | "thunderstorm";
-  intensity: number; // 0..1
-  temp?: number;
-};
-
 function num(s?: string): number | undefined {
   if (!s) return undefined;
   const cleaned = s.replace(/[$,%\s,]/g, "");
@@ -44,54 +39,58 @@ function money(s?: string): number {
 function percent(s?: string): number {
   const n = num(s);
   if (n === undefined) return 0;
-  // if user typed 0.42 treat as 42%
-  return n <= 1 ? n * 100 : n;
+  return n <= 1 ? n * 100 : n; // allow 0.42 => 42%
 }
 
-// Normalize Sheets payload → KPIData + Overrides
+// Normalize Sheets payload → KPIData
 export function adaptKpis(batch: Record<string, string | undefined>): KPIData {
   const now = Date.now();
   return {
-    sales: money(batch[sheetMap.sales]),
-    profit: money(batch[sheetMap.profit]),
-    laborPct: Math.max(0, Math.min(100, percent(batch[sheetMap.laborPct]))),
-    cogs: money(batch[sheetMap.cogs]),
-    onlineViews: money(batch[sheetMap.onlineViews]),
-    reviewScore: money(batch[sheetMap.reviewScore]),
-    fixedCost: money(batch[sheetMap.fixedCost]),
+    sales:           money(batch[sheetMap.sales]),
+    profit:          money(batch[sheetMap.profit]),
+    laborPct:        Math.max(0, Math.min(100, percent(batch[sheetMap.laborPct]))),
+    cogs:            money(batch[sheetMap.cogs]),
+    onlineViews:     money(batch[sheetMap.onlineViews]),
+    reviewScore:     money(batch[sheetMap.reviewScore]),
+    fixedCost:       money(batch[sheetMap.fixedCost]),
     accountsPayable: money(batch[sheetMap.accountsPayable]),
-    bankBalance: money(batch[sheetMap.bankBalance]),
-    newItems: money(batch[sheetMap.newItems]),
+    bankBalance:     money(batch[sheetMap.bankBalance]),
+    newItems:        money(batch[sheetMap.newItems]),
     updatedAt: now,
   };
 }
 
+// Return empty overrides when no overrides ranges are present in sheetMap.ts
 export function adaptOverrides(batch: Record<string, string | undefined>): Overrides {
+  const sm: any = sheetMap as any;
+  if (!sm.overrides) {
+    return { testMode: false };
+  }
   const get = (r: string) => (batch[r]?.trim() ?? "");
-  const tm = get(sheetMap.overrides.testMode).toLowerCase();
+  const tm = get(sm.overrides.testMode).toLowerCase();
   const toNum = (r: string) => (num(get(r)) ?? undefined);
 
   return {
     testMode: tm === "true" || tm === "1" || tm === "yes",
-    weatherOverride: (get(sheetMap.overrides.weatherOverride).toLowerCase() as any) || undefined,
-    timeOverride: (get(sheetMap.overrides.timeOverride).toLowerCase() as any) || undefined,
-    laborOverride: toNum(sheetMap.overrides.laborOverride),
-    salesOverride: toNum(sheetMap.overrides.salesOverride),
-    profitOverride: toNum(sheetMap.overrides.profitOverride),
-    bankOverride: toNum(sheetMap.overrides.bankOverride),
-    newItemsOverride: toNum(sheetMap.overrides.newItemsOverride),
+    weatherOverride: (get(sm.overrides.weatherOverride).toLowerCase() as any) || undefined,
+    timeOverride: (get(sm.overrides.timeOverride).toLowerCase() as any) || undefined,
+    laborOverride: toNum(sm.overrides.laborOverride),
+    salesOverride: toNum(sm.overrides.salesOverride),
+    profitOverride: toNum(sm.overrides.profitOverride),
+    bankOverride: toNum(sm.overrides.bankOverride),
+    newItemsOverride: toNum(sm.overrides.newItemsOverride),
   };
 }
 
-// Apply overrides when testMode true.
+// Apply overrides only when testMode is true
 export function mergeOverrides(k: KPIData, o: Overrides): KPIData {
-  if (!o.testMode) return k;
+  if (!o?.testMode) return k;
   return {
     ...k,
-    laborPct: o.laborOverride ?? k.laborPct,
-    sales: o.salesOverride ?? k.sales,
-    profit: o.profitOverride ?? k.profit,
-    bankBalance: o.bankOverride ?? k.bankBalance,
-    newItems: o.newItemsOverride ?? k.newItems,
+    laborPct:      o.laborOverride  ?? k.laborPct,
+    sales:         o.salesOverride  ?? k.sales,
+    profit:        o.profitOverride ?? k.profit,
+    bankBalance:   o.bankOverride   ?? k.bankBalance,
+    newItems:      o.newItemsOverride ?? k.newItems,
   };
 }

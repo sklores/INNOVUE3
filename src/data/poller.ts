@@ -2,7 +2,7 @@
 
 // Runtime (value) imports
 import { adaptKpis, adaptOverrides, mergeOverrides } from "./adapters";
-// Type-only imports (required when verbatimModuleSyntax is enabled)
+// Type-only imports
 import type { KPIData, Overrides } from "./adapters";
 
 import { allRanges } from "./sheetMap";
@@ -12,9 +12,9 @@ export type OnData = (payload: { kpis: KPIData; overrides: Overrides }) => void;
 export type OnError = (message: string) => void;
 
 export type PollerConfig = {
-  sheetsMs: number;   // e.g., 2000
-  timeMs: number;     // e.g., 60000 (minute tick; used later)
-  weatherMs: number;  // e.g., 600000 (used in M5)
+  sheetsMs: number;
+  timeMs: number;
+  weatherMs: number;
 };
 
 export function startPoller(cfg: PollerConfig, onData: OnData, onError: OnError) {
@@ -30,11 +30,11 @@ export function startPoller(cfg: PollerConfig, onData: OnData, onError: OnError)
 
       const raw = await fetchBatchValues(allRanges, ctrl.signal);
       const base = adaptKpis(raw);
-      const ov = adaptOverrides(raw);
+      const ov = adaptOverrides(raw) ?? { testMode: false };
       const kpis = mergeOverrides(base, ov);
 
-      // Simple dedupe hash so we only dispatch on real changes
-      const hash = JSON.stringify([kpis, ov.testMode, ov.weatherOverride, ov.timeOverride]);
+      // Dedupe on the values we actually use
+      const hash = JSON.stringify([kpis, !!ov.testMode, ov.weatherOverride ?? "", ov.timeOverride ?? ""]);
       if (hash !== lastHash) {
         lastHash = hash;
         onData({ kpis, overrides: ov });
@@ -44,7 +44,6 @@ export function startPoller(cfg: PollerConfig, onData: OnData, onError: OnError)
     }
   }
 
-  // Prime immediately, then poll on cadence
   tickSheets();
   const sheetsId = setInterval(tickSheets, cfg.sheetsMs);
 
