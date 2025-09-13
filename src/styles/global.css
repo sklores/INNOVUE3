@@ -1,15 +1,52 @@
-/* src/styles/global.css */
-:root { --ink:#0f1720; --muted:#667085; --card:#fff; --bg:#f5f7fb; }
-*{box-sizing:border-box} html,body,#root{height:100%} body{margin:0;color:var(--ink);background:var(--bg);font-family:ui-sans-serif,system-ui,-apple-system,"Inter",Arial,sans-serif}
-.app{max-width:900px;margin:0 auto;padding:16px}
-.card{background:var(--card);border-radius:14px;box-shadow:0 1px 2px rgba(0,0,0,.06)}
-.row{display:grid;grid-template-columns:1fr;gap:12px}@media(min-width:640px){.row{grid-template-columns:repeat(2,1fr)}}
-
-/* src/styles/topbar.css */
-/* (reserved for hero later) */
-
-/* src/styles/kpi.css */
-/* (reserved for KPI tiles later) */
-
-/* src/styles/bottom.css */
-/* (reserved for bottom bar later) */
+:root {
+    --ink: #0f1720;
+    --muted: #667085;
+    --card: #ffffff;
+    --bg: #f5f7fb;
+  }
+  
+  * { box-sizing: border-box; }
+  html, body, #root { height: 100%; }
+  
+  body {
+    margin: 0;
+    color: var(--ink);
+    background: var(--bg);
+  
+    /* Manrope as primary font */
+    font-family: "Manrope", ui-sans-serif, system-ui, -apple-system, "Inter", Arial, sans-serif;
+  
+    /* Smooth text */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  
+    /* Line up numbers across tiles */
+    font-variant-numeric: lining-nums tabular-nums;
+    font-feature-settings: "lnum" 1, "tnum" 1;
+  }
+  
+  /* App container */
+  .app {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 16px;
+  }
+  
+  /* Reusable card */
+  .card {
+    background: var(--card);
+    border-radius: 14px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  }
+  
+  /* Simple grid helper used in M1 debug */
+  .row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  @media (min-width: 640px) {
+    .row { grid-template-columns: repeat(2, 1fr); }
+  }
+  
+  /* (Other feature CSS is imported separately from topbar.css / kpi.css / bottom.css) */
