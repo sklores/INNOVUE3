@@ -1,36 +1,41 @@
 /* src/styles/kpi.css */
 
-/* Even, responsive grid for pill tiles */
-.kpi-grid-pills {
+/* Overall section spacing */
+.kpi-layout {
+    display: grid;
+    gap: 14px; /* vertical rhythm between rows */
+  }
+  
+  /* Full-width rows (Sales, Profit) */
+  .kpi-row-full {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  
+  /* Two-column rows with perfectly even spacing */
+  .kpi-row-2 {
     display: grid;
     grid-template-columns: 1fr;
     gap: 14px;
   }
-  @media (min-width: 640px) {
-    .kpi-grid-pills { grid-template-columns: repeat(2, 1fr); }
-  }
-  @media (min-width: 980px) {
-    .kpi-grid-pills { grid-template-columns: repeat(3, 1fr); }
-  }
-  @media (min-width: 1280px) {
-    .kpi-grid-pills { grid-template-columns: repeat(4, 1fr); }
+  
+  @media (min-width: 560px) {
+    .kpi-row-2 { grid-template-columns: 1fr 1fr; }
   }
   
-  /* Colored pill tile */
+  /* Colored pill tile (kept from previous step) */
   .kpi-pill {
     position: relative;
     border-radius: 18px;
     min-height: 108px;
-    /* Soft shadow but lighter than hero cards to keep it airy */
     box-shadow: 0 2px 10px rgba(16, 24, 40, 0.12);
     overflow: hidden;
   }
   
-  /* Gentle overlay to keep text readable across the lightest hues */
+  /* Gentle overlay to keep text readable */
   .kpi-pill__overlay {
     position: absolute;
     inset: 0;
-    /* Slight white veil + inner highlight; keeps black text readable */
     background: linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.06) 100%);
     pointer-events: none;
   }
@@ -44,23 +49,21 @@
     padding: 16px 18px;
   }
   
-  /* Labels muted; values dark/black (Manrope + tabular set in global.css) */
   .kpi-pill__label {
     font-size: 12px;
     letter-spacing: 0.2px;
     color: var(--ink);
-    opacity: 0.85; /* muted without losing contrast */
+    opacity: 0.85;
   }
   
   .kpi-pill__value {
     font-size: 28px;
     line-height: 1.1;
     font-weight: 800;
-    color: var(--ink); /* keep dark for readability */
-    text-shadow: 0 1px 0 rgba(255,255,255,0.25); /* tiny lift on mid hues */
+    color: var(--ink);
+    text-shadow: 0 1px 0 rgba(255,255,255,0.25);
   }
   
-  /* Optional hover lift on desktop */
   @media (hover:hover) {
     .kpi-pill:hover { transform: translateY(-1px); transition: transform 120ms ease; }
   }
