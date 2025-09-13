@@ -1,15 +1,21 @@
 import { useAppState } from "./state";
 
-// Tiny selector helpers for M1 (we’ll expand in M2+)
 export function useKpis() {
-  const { kpis } = useAppState();
-  return kpis;
+  return useAppState().kpis;
 }
 export function useLastUpdated() {
-  const { lastUpdated } = useAppState();
-  return lastUpdated.sheets;
+  return useAppState().lastUpdated.sheets;
 }
 export function useLoadingError() {
   const { loading, error } = useAppState();
   return { loading, error };
+}
+export function useViewRange() {
+  return useAppState().viewRange;
+}
+export function useSplashActive() {
+  return useAppState().splashActive;
+}
+export function useBeamTriggerToken() {
+  return useAppState().beamTriggerToken;
 }

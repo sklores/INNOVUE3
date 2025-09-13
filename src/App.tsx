@@ -1,3 +1,5 @@
+// src/App.tsx
+import TopBar from "./scenic/TopBar";
 import { useKpis, useLastUpdated, useLoadingError } from "./app/selectors";
 
 export default function App() {
@@ -7,10 +9,22 @@ export default function App() {
 
   return (
     <div className="app">
-      <h1>Innovue 3 — M1 Data Backbone</h1>
+      {/* M2: Scenic hero with splash + center-docked control pill */}
+      <TopBar />
+
+      {/* M1: Data Backbone debug view */}
+      <h1 style={{ marginTop: 36 }}>Innovue 3 — M1 Data Backbone</h1>
 
       {error && (
-        <div className="card" style={{ padding: 12, border: "1px solid #ffd1d1", background: "#fff6f6", marginBottom: 12 }}>
+        <div
+          className="card"
+          style={{
+            padding: 12,
+            border: "1px solid #ffd1d1",
+            background: "#fff6f6",
+            marginBottom: 12,
+          }}
+        >
           <strong>Sheets Error:</strong> {error}
         </div>
       )}
@@ -42,7 +56,11 @@ export default function App() {
         ))}
       </div>
 
-      {loading && <div style={{ marginTop: 16, color: "var(--muted)" }}>Loading from Google Sheets…</div>}
+      {loading && (
+        <div style={{ marginTop: 16, color: "var(--muted)" }}>
+          Loading from Google Sheets…
+        </div>
+      )}
     </div>
   );
 }

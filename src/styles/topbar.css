@@ -1,15 +1,94 @@
-/* src/styles/global.css */
-:root { --ink:#0f1720; --muted:#667085; --card:#fff; --bg:#f5f7fb; }
-*{box-sizing:border-box} html,body,#root{height:100%} body{margin:0;color:var(--ink);background:var(--bg);font-family:ui-sans-serif,system-ui,-apple-system,"Inter",Arial,sans-serif}
-.app{max-width:900px;margin:0 auto;padding:16px}
-.card{background:var(--card);border-radius:14px;box-shadow:0 1px 2px rgba(0,0,0,.06)}
-.row{display:grid;grid-template-columns:1fr;gap:12px}@media(min-width:640px){.row{grid-template-columns:repeat(2,1fr)}}
-
-/* src/styles/topbar.css */
-/* (reserved for hero later) */
-
-/* src/styles/kpi.css */
-/* (reserved for KPI tiles later) */
-
-/* src/styles/bottom.css */
-/* (reserved for bottom bar later) */
+/* Scenic hero container */
+.topbar-hero {
+    position: relative;
+    overflow: visible;
+    border-radius: 14px;
+    background: #fff;
+  }
+  
+  /* Sky + scene layers */
+  .topbar-sky,
+  .topbar-scene {
+    position: absolute;
+    inset: 0;
+    border-radius: 14px;
+  }
+  .topbar-sky { z-index: 1; }
+  .topbar-scene { z-index: 2; }
+  
+  /* Center-docked pill */
+  .topbar-pill-dock {
+    position: absolute;
+    left: 50%;
+    bottom: -22px;            /* overlap the hero border slightly */
+    transform: translateX(-50%);
+    z-index: 4;
+  }
+  
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    background: #fff;
+    border-radius: 999px;
+    box-shadow: 0 6px 20px rgba(16,24,40,0.12);
+    padding: 6px;
+    max-width: calc(100vw - 32px);
+  }
+  
+  /* Segmented control */
+  .seg-wrap {
+    display: inline-flex;
+    background: #f1f4f8;
+    border-radius: 999px;
+    padding: 4px;
+  }
+  .seg-btn {
+    font: inherit;
+    border: 0;
+    background: transparent;
+    padding: 8px 12px;
+    border-radius: 999px;
+    min-height: 36px;
+    min-width: 64px;
+    cursor: pointer;
+  }
+  .seg-active {
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(16,24,40,0.12);
+  }
+  
+  /* Refresh button */
+  .pill-gap { width: 8px; }
+  .pill-refresh {
+    font: inherit;
+    border: 0;
+    background: #0b2b49;
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 999px;
+    min-height: 36px;
+    min-width: 86px;
+    cursor: pointer;
+  }
+  .pill-refresh:disabled { opacity: .6; cursor: default; }
+  
+  /* Splash overlay (fades out) */
+  .splash-wrap {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    animation: splashFade 4s ease forwards;
+    pointer-events: none; /* controls disabled during splash handled in state if needed */
+  }
+  @keyframes splashFade {
+    0%   { opacity: 1; }
+    85%  { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  
+  /* Lighthouse beam pulse */
+  .beam { transition: transform 220ms ease, opacity 220ms ease; }
+  .beam-pulse {
+    transform: rotate(-5deg) scaleX(1.1);
+    opacity: .95;
+  }

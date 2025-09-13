@@ -1,18 +1,19 @@
 import React, { createContext, useContext, useEffect, useReducer } from "react";
 import { POLL } from "./config";
 import { startPoller } from "../data/poller";
-import type { KPIData, Overrides } from "../data/adapters";
+import { fetchBatchValues } from "../data/sheetsClient";
+import { allRanges } from "../data/sheetMap";
+import { adaptKpis, adaptOverrides, mergeOverrides, type KPIData, type Overrides } from "../data/adapters";
 
 type AppState = {
   kpis: KPIData | null;
   overrides: Overrides | null;
   loading: boolean;
   error?: string;
-  lastUpdated: {
-    sheets?: number;
-  };
+  lastUpdated: { sheets?: number };
   viewRange: "day" | "week" | "month";
-  // Splash/beam will be added in M2+
+  splashActive: boolean;         // M2: client-logo splash visible initially
+  beamTriggerToken?: number;     // M2: one-shot token to re-trigger lighthouse beam on Refresh
 };
 
 type Action =
@@ -20,7 +21,9 @@ type Action =
   | { type: "sheets"; payload: { kpis: KPIData; overrides: Overrides } }
   | { type: "error"; payload: string }
   | { type: "setRange"; payload: AppState["viewRange"] }
-  | { type: "clearError" };
+  | { type: "clearError" }
+  | { type: "splashOff" }
+  | { type: "beamPulse" };
 
 const Ctx = createContext<{ state: AppState; dispatch: React.Dispatch<Action> } | null>(null);
 
@@ -43,6 +46,10 @@ function reducer(state: AppState, action: Action): AppState {
       return { ...state, viewRange: action.payload };
     case "clearError":
       return { ...state, error: undefined };
+    case "splashOff":
+      return { ...state, splashActive: false };
+    case "beamPulse":
+      return { ...state, beamTriggerToken: Date.now() };
     default:
       return state;
   }
@@ -55,6 +62,7 @@ export const AppProvider: React.FC<React.PropsWithChildren> = ({ children }) => 
     loading: true,
     lastUpdated: {},
     viewRange: "day",
+    splashActive: true,
   });
 
   useEffect(() => {
@@ -67,6 +75,14 @@ export const AppProvider: React.FC<React.PropsWithChildren> = ({ children }) => 
     return () => stop();
   }, []);
 
+  // Auto-hide splash after configured fade (let CSS handle the 4s; we flip state at ~4s)
+  useEffect(() => {
+    if (!state.splashActive) return;
+    const t = setTimeout(() => dispatch({ type: "splashOff" }), 4000);
+    return () => clearTimeout(t);
+  }, [state.splashActive]);
+
+  // Auto-clear transient errors
   useEffect(() => {
     if (!state.error) return;
     const t = setTimeout(() => dispatch({ type: "clearError" }), 4000);
@@ -85,4 +101,18 @@ export function useAppDispatch() {
   const c = useContext(Ctx);
   if (!c) throw new Error("useAppDispatch must be used within <AppProvider>");
   return c.dispatch;
+}
+
+// M2: manual refresh that fetches immediately and emits a beam pulse
+export async function refreshNow(dispatch: React.Dispatch<Action>) {
+  try {
+    const raw = await fetchBatchValues(allRanges);
+    const base = adaptKpis(raw);
+    const ov = adaptOverrides(raw) ?? { testMode: false };
+    const kpis = mergeOverrides(base, ov);
+    dispatch({ type: "sheets", payload: { kpis, overrides: ov } });
+    dispatch({ type: "beamPulse" });
+  } catch (e: any) {
+    dispatch({ type: "error", payload: e?.message ?? "Sheets error" });
+  }
 }
