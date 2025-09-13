@@ -2,12 +2,21 @@
 import React from "react";
 import KpiTile from "./KpiTile";
 import { useKpis } from "../../app/selectors";
-import { fmtMoney, fmtNumber, fmtPct } from "../../app/selectors";
+import { TARGETS } from "../../app/config";
+
+// Simple formatters (numbers keep dark text)
+const fmtMoney = (n?: number) =>
+  typeof n === "number"
+    ? n.toLocaleString(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 })
+    : "—";
+const fmtNumber = (n?: number) => (typeof n === "number" ? n.toLocaleString() : "—");
+const fmtPct = (n?: number) => (typeof n === "number" ? `${Math.round(n)}%` : "—");
 
 const KpiTiles: React.FC = () => {
   const k = useKpis();
+
   return (
-    <div className="kpi-grid">
+    <div className="kpi-grid-pills">
       <KpiTile metric="sales"           label="Sales"         value={k?.sales}           format={fmtMoney} />
       <KpiTile metric="profit"          label="Profit"        value={k?.profit}          format={fmtMoney} />
       <KpiTile metric="laborPct"        label="Labor %"       value={k?.laborPct}        format={fmtPct} />

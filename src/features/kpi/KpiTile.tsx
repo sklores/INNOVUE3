@@ -1,6 +1,6 @@
 // src/features/kpi/KpiTile.tsx
 import React, { useMemo } from "react";
-import { tileColor, tilePercent } from "../../app/selectors";
+import { tileColor } from "../../app/selectors";
 import { TARGETS } from "../../app/config";
 
 type Props = {
@@ -11,17 +11,28 @@ type Props = {
 };
 
 const KpiTile: React.FC<Props> = ({ metric, label, value, format }) => {
-  const color = useMemo(() => tileColor(metric, value), [metric, value]);
-  const pct = useMemo(() => tilePercent(metric, value), [metric, value]);
+  const bg = useMemo(() => tileColor(metric, value), [metric, value]);
+
+  const display = useMemo(() => {
+    if (format) return format(value);
+    return typeof value === "number" ? value.toLocaleString() : "—";
+  }, [value, format]);
 
   return (
-    <div className="kpi card" role="group" aria-label={`${label} tile`}>
-      <div className="kpi-label">{label}</div>
-      <div className="kpi-value" style={{ color }}>
-        {(format ?? ((n?: number) => (typeof n === "number" ? n.toLocaleString() : "—")))(value)}
-      </div>
-      <div className="kpi-bar-outer" aria-hidden>
-        <div className="kpi-bar-inner" style={{ width: `${pct}%`, background: color }} />
+    <div
+      className="kpi-pill"
+      role="group"
+      aria-label={`${label} tile`}
+      style={{
+        // Pastel background per metric
+        background: bg,
+      }}
+    >
+      {/* subtle inner overlay for readability + depth */}
+      <div className="kpi-pill__overlay" />
+      <div className="kpi-pill__content">
+        <div className="kpi-pill__label">{label}</div>
+        <div className="kpi-pill__value">{display}</div>
       </div>
     </div>
   );

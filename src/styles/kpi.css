@@ -1,49 +1,66 @@
 /* src/styles/kpi.css */
 
-.kpi-grid {
+/* Even, responsive grid for pill tiles */
+.kpi-grid-pills {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 14px;
   }
   @media (min-width: 640px) {
-    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .kpi-grid-pills { grid-template-columns: repeat(2, 1fr); }
   }
   @media (min-width: 980px) {
-    .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+    .kpi-grid-pills { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (min-width: 1280px) {
+    .kpi-grid-pills { grid-template-columns: repeat(4, 1fr); }
   }
   
-  .kpi {
-    padding: 16px;
-    border-radius: 14px;
-    background: #fff;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
-    min-height: 92px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
-  
-  .kpi-label {
-    font-size: 12px;
-    color: var(--muted, #667085);
-    margin-bottom: 6px;
-  }
-  
-  .kpi-value {
-    font-size: 26px;
-    font-weight: 800;
-  }
-  
-  .kpi-bar-outer {
-    margin-top: 12px;
-    height: 8px;
-    background: #eef2f7;
-    border-radius: 999px;
+  /* Colored pill tile */
+  .kpi-pill {
+    position: relative;
+    border-radius: 18px;
+    min-height: 108px;
+    /* Soft shadow but lighter than hero cards to keep it airy */
+    box-shadow: 0 2px 10px rgba(16, 24, 40, 0.12);
     overflow: hidden;
   }
-  .kpi-bar-inner {
-    height: 100%;
-    width: 0%;
-    background: #9bd5c8; /* overwritten inline */
-    transition: width 220ms ease, background 220ms ease;
+  
+  /* Gentle overlay to keep text readable across the lightest hues */
+  .kpi-pill__overlay {
+    position: absolute;
+    inset: 0;
+    /* Slight white veil + inner highlight; keeps black text readable */
+    background: linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.06) 100%);
+    pointer-events: none;
+  }
+  
+  .kpi-pill__content {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    align-content: center;
+    gap: 6px;
+    padding: 16px 18px;
+  }
+  
+  /* Labels muted; values dark/black (Manrope + tabular set in global.css) */
+  .kpi-pill__label {
+    font-size: 12px;
+    letter-spacing: 0.2px;
+    color: var(--ink);
+    opacity: 0.85; /* muted without losing contrast */
+  }
+  
+  .kpi-pill__value {
+    font-size: 28px;
+    line-height: 1.1;
+    font-weight: 800;
+    color: var(--ink); /* keep dark for readability */
+    text-shadow: 0 1px 0 rgba(255,255,255,0.25); /* tiny lift on mid hues */
+  }
+  
+  /* Optional hover lift on desktop */
+  @media (hover:hover) {
+    .kpi-pill:hover { transform: translateY(-1px); transition: transform 120ms ease; }
   }
