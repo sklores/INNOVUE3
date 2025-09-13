@@ -1,18 +1,18 @@
 // src/App.tsx
 import TopBar from "./scenic/TopBar";
-import { useKpis, useLastUpdated, useLoadingError } from "./app/selectors";
+import { useLastUpdated, useLoadingError } from "./app/selectors";
+import KpiTiles from "./features/kpi/KpiTiles";
 
 export default function App() {
-  const k = useKpis();
   const updated = useLastUpdated();
   const { loading, error } = useLoadingError();
 
   return (
     <div className="app">
-      {/* M2: Scenic hero with splash + center-docked control pill */}
+      {/* Scenic hero with splash + center-docked control pill */}
       <TopBar />
 
-      {/* M1: Data Backbone debug view */}
+      {/* Status / debug header */}
       <h1 style={{ marginTop: 36 }}>Innovue 3 — M1 Data Backbone</h1>
 
       {error && (
@@ -36,25 +36,8 @@ export default function App() {
         </div>
       </div>
 
-      <div className="row">
-        {[
-          ["Sales", k?.sales],
-          ["Profit", k?.profit],
-          ["Labor %", k?.laborPct],
-          ["COGS", k?.cogs],
-          ["Online Views", k?.onlineViews],
-          ["Review Score", k?.reviewScore],
-          ["Fixed Cost", k?.fixedCost],
-          ["A/P", k?.accountsPayable],
-          ["Bank", k?.bankBalance],
-          ["New Items", k?.newItems],
-        ].map(([label, value]) => (
-          <div key={label as string} className="card" style={{ padding: 16 }}>
-            <div style={{ fontSize: 12, color: "var(--muted)" }}>{label}</div>
-            <div style={{ fontSize: 24, fontWeight: 800 }}>{value ?? "—"}</div>
-          </div>
-        ))}
-      </div>
+      {/* NEW: KPI tiles with full pastel spectrum bars */}
+      <KpiTiles />
 
       {loading && (
         <div style={{ marginTop: 16, color: "var(--muted)" }}>
