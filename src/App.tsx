@@ -1,12 +1,11 @@
 // src/App.tsx
 import React from "react";
 import TopBar from "./scenic/TopBar";
-import { useKpis, useLastUpdated, useLoadingError } from "./app/selectors";
+import { useLastUpdated, useLoadingError } from "./app/selectors";
 import KpiTiles from "./features/kpi/KpiTiles";
-import Marquee from "./features/marquee/Marquee";
+import LiveFeedPanel from "./features/marquee/LiveFeedPanel";
 
 export default function App() {
-  const k = useKpis();
   const updated = useLastUpdated();
   const { loading, error } = useLoadingError();
 
@@ -15,7 +14,7 @@ export default function App() {
       {/* Scenic hero */}
       <TopBar />
 
-      {/* Header / status */}
+      {/* Screen title + quick status */}
       <h1 style={{ marginTop: 36 }}>Innovue 3 — M1 Data Backbone</h1>
 
       {error && (
@@ -32,18 +31,11 @@ export default function App() {
         </div>
       )}
 
-      <div className="card" style={{ padding: 16, marginBottom: 12 }}>
-        <div style={{ fontSize: 12, color: "var(--muted)" }}>Last Updated</div>
-        <div style={{ fontSize: 18, fontWeight: 700 }}>
-          {updated ? new Date(updated).toLocaleTimeString() : "—"}
-        </div>
-      </div>
-
-      {/* GCDC Live Feed (A15–A17 titles toggle, B15–B17 text scroll) */}
-      <Marquee />
-
-      {/* KPI tiles (Sales full-width top, 2-col grid mid, Profit full-width bottom) */}
+      {/* KPI layout */}
       <KpiTiles />
+
+      {/* Tall Live Feed (Last Updated is embedded in its header) */}
+      <LiveFeedPanel />
 
       {loading && (
         <div style={{ marginTop: 16, color: "var(--muted)" }}>
