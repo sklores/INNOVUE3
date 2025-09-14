@@ -1,17 +1,17 @@
-// src/features/marquee/LiveFeedPanel.tsx
-// Innovue 3 — Live Feed panel (old look, taller rail, NO animation)
-// Data stays exactly as wired via selectors: titles = A15–A17, text = B15–B17.
-
 import React, { useEffect, useMemo, useState } from "react";
 import { useFeed, useLastUpdated } from "../../app/selectors";
 
-const SPLIT_REGEX = /-{3,}|—{2,}|–{2,}/g; // handles "-----" and long dashes
+/**
+ * Splits a single B15–B17 feed text into parts on dashes like:
+ * "Item A ---- Item B — Item C" -> ["Item A", "Item B", "Item C"]
+ */
+const SPLIT_REGEX = /-{3,}|—{2,}|–{2,}/g;
 
 const LiveFeedPanel: React.FC = () => {
   const feed = useFeed();
-  const updated = useLastUpdated();
+  const updated = useLastUpdated(); // used only for display near the title
 
-  // remember selected tab locally
+  // remember selected tab (A15/A16/A17) locally
   const [idx, setIdx] = useState<number>(() => {
     const saved = Number(localStorage.getItem("liveFeedTab") ?? "0");
     return Number.isFinite(saved) ? saved : 0;
@@ -23,28 +23,33 @@ const LiveFeedPanel: React.FC = () => {
   // Titles from A15–A17
   const titles = feed?.titles ?? ["Social", "Reviews", "Bank"];
 
-  // Current text (from B15–B17) -> split into parts -> join as one line
-  const text = (feed?.texts?.[idx] ?? "").trim();
+  // Current text (from B15–B17) -> single line (joined with •)
+  const raw = (feed?.texts?.[idx] ?? "").trim();
   const line = useMemo(() => {
-    if (!text) return "";
-    const parts = text
-      .split(SPLIT_REGEX)               // split on dashed separators
-      .map(s => s.replace(/\s+/g, " ").trim())
+    if (!raw) return "";
+    const parts = raw
+      .split(SPLIT_REGEX)
+      .map((s) => s.replace(/\s+/g, " ").trim())
       .filter(Boolean);
-    return parts.join(" • ");           // single continuous line
-  }, [text]);
+    return parts.join(" • ");
+  }, [raw]);
+
+  // Optional stats if your state provides them (chips are hidden when undefined)
+  const mentions = (feed as any)?.stats?.mentions as number | undefined;
+  const newReviews = (feed as any)?.stats?.newReviews as number | undefined;
+  const impressions = (feed as any)?.stats?.impressions as number | undefined;
 
   const lastTime = updated ? new Date(updated).toLocaleTimeString() : "—";
 
   return (
     <section className="lf card" role="region" aria-label="GCDC Live Feed">
-      {/* Header: Last Updated + Live label (left) and badge (right) */}
-      <div className="lf-header">
-        <div className="lf-header-left">
+      {/* Title row */}
+      <div className="lf-titlebar">
+        <div className="lf-title-left">
+          <span className="lf-title-main">GCDC Live Feed</span>
+          <span className="lf-dot" aria-hidden />
           <span className="lf-upd-label">Last Updated</span>
           <span className="lf-upd-time">{lastTime}</span>
-          <span className="lf-dot" aria-hidden />
-          <span className="lf-title">GCDC Live Feed</span>
         </div>
 
         <div className="lf-badge" aria-hidden>
@@ -68,32 +73,30 @@ const LiveFeedPanel: React.FC = () => {
         ))}
       </div>
 
-      {/* Tall blue rail — single line, no animation */}
+      {/* Tall blue rail — single static line (no scroll) */}
       <div className="lf-rail">
         <div className="lf-line" title={line}>
           {line || "No items yet"}
         </div>
       </div>
 
-      {/* Small status chips row (optional: keep empty if you don’t use it yet) */}
+      {/* Stats chips (render only when values exist) */}
       <div className="lf-stats">
-        {/* Example placeholders (comment out/remove if not needed)
-        <span className="lf-chip"><span className="dot ok" /> Mentions: 27</span>
-        <span className="lf-chip"><span className="dot ok" /> New Reviews: 5</span>
-        <span className="lf-chip"><span className="dot ok" /> Links Clicked: 92</span>
-        */}
-      </div>
-
-      {/* Bottom status row */}
-      <div className="lf-bottom">
-        <div className="lf-status-left">
-          <div className="lf-pill-status">Tue, Sep 9</div>
-          <div className="lf-pill-status">Cloudy · —°</div>
-          <div className="lf-pill-status ok">API OK</div>
-        </div>
-        <button className="lf-button" onClick={() => window.location.reload()}>
-          Refresh
-        </button>
+        {Number.isFinite(mentions as number) && (
+          <span className="lf-chip">
+            <span className="dot ok" /> Mentions: {mentions}
+          </span>
+        )}
+        {Number.isFinite(newReviews as number) && (
+          <span className="lf-chip">
+            <span className="dot ok" /> New Reviews: {newReviews}
+          </span>
+        )}
+        {Number.isFinite(impressions as number) && (
+          <span className="lf-chip">
+            <span className="dot ok" /> Impressions: {impressions}
+          </span>
+        )}
       </div>
     </section>
   );

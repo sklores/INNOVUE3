@@ -1,8 +1,6 @@
-/* src/styles/marquee.css
-   Innovue 3 — Live Feed (old aesthetic restored, taller rail, NO animation)
-   All font inherits Manrope from global.css. */
+/* Innovue 3 — Live Feed (reference look, taller rail, NO bottom bar here) */
 
-   :root{
+:root{
     --lf-panel:#eef2f6;
     --lf-border:#d6dde6;
     --lf-shadow:0 6px 22px rgba(20,24,40,.14);
@@ -17,8 +15,6 @@
   
     --lf-chip-bg:#f5f7fb;
     --lf-chip-dot:#18c26e;
-  
-    --lf-status-bg:#f2f4f8;
   }
   
   /* Card */
@@ -33,23 +29,23 @@
     gap:12px;
   }
   
-  /* Header row */
-  .lf-header{
+  /* Title row (left: title + updated; right: badge) */
+  .lf-titlebar{
     display:grid;
     grid-template-columns:1fr 44px;
     align-items:center;
     gap:12px;
   }
-  .lf-header-left{
+  .lf-title-left{
     display:inline-grid;
     grid-auto-flow:column;
     align-items:center;
-    gap:8px;
+    gap:10px;
   }
+  .lf-title-main{ font-weight:800; font-size:16px; letter-spacing:.2px; }
+  .lf-dot{ width:8px; height:8px; border-radius:50%; background:#19c26e; box-shadow:0 0 0 2px rgba(25,194,110,.18); }
   .lf-upd-label{ color:#667085; font-size:13px; font-weight:600; }
   .lf-upd-time{ font-weight:800; letter-spacing:.2px; }
-  .lf-dot{ width:8px; height:8px; border-radius:50%; background:#19c26e; box-shadow:0 0 0 2px rgba(25,194,110,.18); }
-  .lf-title{ font-weight:700; }
   .lf-badge{ display:grid; place-items:center; }
   .lf-badge__medal{
     width:36px; height:36px; border-radius:50%;
@@ -57,7 +53,7 @@
     box-shadow:inset 0 0 0 2px rgba(0,0,0,.05), 0 2px 2px rgba(0,0,0,.12);
   }
   
-  /* Tabs (centered row) */
+  /* Tabs (centered) */
   .lf-tabs{
     display:flex;
     justify-content:center;
@@ -84,12 +80,12 @@
   }
   .lf-tab:hover{ transform:translateY(-1px); }
   
-  /* Tall blue rail — single line */
+  /* Tall blue rail — single static line */
   .lf-rail{
     background:var(--lf-rail-bg);
     border:1px solid var(--lf-rail-border);
     border-radius:12px;
-    height:56px;          /* taller presence */
+    height:56px; /* taller */
     display:grid;
     align-items:center;
     overflow:hidden;
@@ -104,8 +100,13 @@
     letter-spacing:.2px;
   }
   
-  /* Small stats chips (optional) */
-  .lf-stats{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+  /* Stats chips (centered, render only when values provided) */
+  .lf-stats{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
   .lf-chip{
     background:var(--lf-chip-bg);
     border:1px solid var(--lf-border);
@@ -121,37 +122,8 @@
   .lf-chip .dot{ width:8px; height:8px; border-radius:50%; background:#c5c8d1; }
   .lf-chip .dot.ok{ background:var(--lf-chip-dot); }
   
-  /* Bottom status */
-  .lf-bottom{
-    display:grid;
-    grid-template-columns:1fr auto;
-    align-items:center;
-    gap:12px;
-    margin-top:2px;
-  }
-  .lf-status-left{ display:flex; gap:10px; flex-wrap:wrap; }
-  .lf-pill-status{
-    background:var(--lf-status-bg);
-    border:1px solid var(--lf-border);
-    border-radius:999px;
-    padding:8px 12px;
-    font-weight:700;
-    color:#0b1220;
-  }
-  .lf-pill-status.ok{ border-color:#b6edd3; background:#e8fff3; }
-  .lf-button{
-    background:var(--lf-status-bg);
-    border:1px solid var(--lf-border);
-    border-radius:999px;
-    padding:8px 14px;
-    font-weight:800;
-    cursor:pointer;
-    transition:transform .06s ease;
-  }
-  .lf-button:hover{ transform:translateY(-1px); }
-  
   /* Responsive */
   @media (max-width:560px){
-    .lf-header{ grid-template-columns:1fr; }
+    .lf-titlebar{ grid-template-columns:1fr; }
     .lf-badge{ display:none; }
   }
