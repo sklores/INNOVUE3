@@ -1,47 +1,36 @@
-// src/App.tsx
 import React from "react";
+
+// Scenic top bar (hero)
 import TopBar from "./scenic/TopBar";
-import { useLastUpdated, useLoadingError } from "./app/selectors";
+
+// KPI tiles grid
 import KpiTiles from "./features/kpi/KpiTiles";
+
+// Live Feed marquee (tabs A15–A17, text B15–B17)
 import LiveFeedPanel from "./features/marquee/LiveFeedPanel";
 
-export default function App() {
-  const updated = useLastUpdated();
-  const { loading, error } = useLoadingError();
+// Bottom bar (date / weather / API OK / Refresh lives here)
+import BottomBar from "./components/BottomBar";
 
+// Optional padded safe area wrapper (if you use it, otherwise remove)
+import SafeArea from "./components/SafeArea";
+
+const App: React.FC = () => {
   return (
-    <div className="app">
+    <SafeArea>
       {/* Scenic hero */}
       <TopBar />
 
-      {/* Screen title + quick status */}
-      <h1 style={{ marginTop: 36 }}>Innovue 3 — M1 Data Backbone</h1>
-
-      {error && (
-        <div
-          className="card"
-          style={{
-            padding: 12,
-            border: "1px solid #ffd1d1",
-            background: "#fff6f6",
-            marginBottom: 12,
-          }}
-        >
-          <strong>Sheets Error:</strong> {error}
-        </div>
-      )}
-
-      {/* KPI layout */}
+      {/* KPI grid */}
       <KpiTiles />
 
-      {/* Tall Live Feed (Last Updated is embedded in its header) */}
+      {/* Marquee widget (taller rail, scrolling, Manrope) */}
       <LiveFeedPanel />
 
-      {loading && (
-        <div style={{ marginTop: 16, color: "var(--muted)" }}>
-          Loading from Google Sheets…
-        </div>
-      )}
-    </div>
+      {/* Bottom status bar (date/weather/API/refresh) */}
+      <BottomBar />
+    </SafeArea>
   );
-}
+};
+
+export default App;
