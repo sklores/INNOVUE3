@@ -1,9 +1,9 @@
 // src/data/adapters.ts
-// Normalizes raw Sheets values into app state shapes.
+// Normalize raw { [A1]: value } map into app state shapes.
 
 import { sheetMap } from "./sheetMap";
 
-type Raw = Record<string, string | number | undefined>;
+type Raw = Record<string, any>;
 
 export type FeedState = {
   titles: string[];
@@ -18,19 +18,22 @@ export type FeedState = {
 export type AppData = {
   kpis: Record<string, number>;
   feed: FeedState;
-  // ...other domains like overrides if you use them
 };
 
 function toNum(v: any): number | undefined {
-  if (v === null || v === undefined) return undefined;
+  if (v == null) return undefined;
   const n = Number(String(v).replace(/[^\d.-]/g, ""));
   return Number.isFinite(n) ? n : undefined;
 }
 
+function toStr(v: any): string {
+  return String(v ?? "").trim();
+}
+
 export function adapt(raw: Raw): AppData {
-  // ---- KPIs (minimal example; keep your existing mapping as needed) ----
+  // KPIs (leave as-is; add more if you track them)
   const kpis: Record<string, number> = {};
-  const kpiKeys = [
+  ([
     "sales",
     "cogs",
     "laborPct",
@@ -40,36 +43,45 @@ export function adapt(raw: Raw): AppData {
     "onlineViews",
     "netProfit",
     "reviewScore",
-  ] as const;
-  for (const key of kpiKeys) {
-    const r = sheetMap[key];
-    const num = toNum(raw[r]);
-    if (num !== undefined) kpis[key] = num;
-  }
+  ] as const).forEach((k) => {
+    const a1 = sheetMap[k];
+    const n = toNum(raw[a1]);
+    if (n != null) kpis[k] = n;
+  });
 
-  // ---- Live feed titles/texts ----
+  // Live feed titles + texts
   const titles = [
-    String(raw[sheetMap.feed1Title] ?? "").trim(),
-    String(raw[sheetMap.feed2Title] ?? "").trim(),
-    String(raw[sheetMap.feed3Title] ?? "").trim(),
+    toStr(raw[sheetMap.feed1Title]),
+    toStr(raw[sheetMap.feed2Title]),
+    toStr(raw[sheetMap.feed3Title]),
   ];
   const texts = [
-    String(raw[sheetMap.feed1Text] ?? "").trim(),
-    String(raw[sheetMap.feed2Text] ?? "").trim(),
-    String(raw[sheetMap.feed3Text] ?? "").trim(),
+    toStr(raw[sheetMap.feed1Text]),
+    toStr(raw[sheetMap.feed2Text]),
+    toStr(raw[sheetMap.feed3Text]),
   ];
 
-  // ---- New: stats chips (A20–A22 names, B20–B22 values) ----
-  const statMentions = toNum(raw[sheetMap.statMentionsValue]);
-  const statNewReviews = toNum(raw[sheetMap.statNewReviewsValue]);
-  const statImpressions = toNum(raw[sheetMap.statImpressionsValue]);
+  // Chips (labels are in sheet but UI uses canonical names)
+  const stat1Label = toStr(raw[sheetMap.stat1Label]); // e.g., "Mentions"
+  const stat2Label = toStr(raw[sheetMap.stat2Label]); // e.g., "New Reviews"
+  const stat3Label = toStr(raw[sheetMap.stat3Label]); // e.g., "Impressions"
 
-  const feed: FeedState = { titles, texts };
-  feed.stats = {
-    mentions: statMentions,
-    newReviews: statNewReviews,
-    impressions: statImpressions,
+  const stat1 = toNum(raw[sheetMap.stat1Value]);
+  const stat2 = toNum(raw[sheetMap.stat2Value]);
+  const stat3 = toNum(raw[sheetMap.stat3Value]);
+
+  // map sheet labels to canonical slots so UI is stable
+  const stats: FeedState["stats"] = {};
+  const put = (label?: string, val?: number) => {
+    if (!label || val == null) return;
+    const l = label.toLowerCase();
+    if (l.includes("mention")) stats.mentions = val;
+    else if (l.includes("review")) stats.newReviews = val;
+    else if (l.includes("impression") || l.includes("click")) stats.impressions = val;
   };
+  put(stat1Label, stat1);
+  put(stat2Label, stat2);
+  put(stat3Label, stat3);
 
-  return { kpis, feed };
+  return { kpis, feed: { titles, texts, stats } };
 }

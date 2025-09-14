@@ -1,8 +1,8 @@
 // src/data/sheetMap.ts
-// Maps human-readable keys to A1 ranges on the active sheet.
+// A1 mappings used by the Sheets client + adapters
 
 export const sheetMap = {
-    // ---- KPIs (existing) ----
+    // ---- KPIs (keep your existing keys as-is) ----
     sales: "B2",
     cogs: "B3",
     laborPct: "B4",
@@ -13,7 +13,7 @@ export const sheetMap = {
     netProfit: "B11",
     reviewScore: "B12",
   
-    // ---- Live feed titles/texts (existing) ----
+    // ---- Live feed (titles/texts) ----
     feed1Title: "A15",
     feed1Text: "B15",
     feed2Title: "A16",
@@ -21,14 +21,13 @@ export const sheetMap = {
     feed3Title: "A17",
     feed3Text: "B17",
   
-    // ---- New: social stats chips ----
-    statMentionsLabel: "A20",
-    statMentionsValue: "B20",
-    statNewReviewsLabel: "A21",
-    statNewReviewsValue: "B21",
-    statImpressionsLabel: "A22",
-    statImpressionsValue: "B22",
+    // ---- Social stats (chips) ----
+    stat1Label: "A20",  // e.g., "Mentions"
+    stat1Value: "B20",  // e.g., 27
+    stat2Label: "A21",  // e.g., "New Reviews"
+    stat2Value: "B21",  // e.g., 5
+    stat3Label: "A22",  // e.g., "Impressions"
+    stat3Value: "B22",  // e.g., 92
   } as const;
   
-  // Helper to get all ranges for the batch request
   export const allRanges: string[] = Object.values(sheetMap);

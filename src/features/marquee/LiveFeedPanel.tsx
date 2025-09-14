@@ -1,22 +1,29 @@
+// src/features/marquee/LiveFeedPanel.tsx
+// Innovue 3 — Live Feed (scrolling rail + chips from A20–A22/B20–B22)
+
 import React, { useEffect, useMemo, useState } from "react";
 import { useFeed, useLastUpdated } from "../../app/selectors";
 
+/** Split on sequences of dashes / long dashes */
 const SPLIT_REGEX = /-{3,}|—{2,}|–{2,}/g;
 
-const LiveFeedPanel: React.FC = () => {
-  const feed = useFeed();
-  const updated = useLastUpdated();
+type Stat = { label: string; value: number };
 
+const LiveFeedPanel: React.FC = () => {
+  const feed = useFeed();                  // { titles: string[], texts: string[], stats?: { ... } }
+  const updated = useLastUpdated();        // ISO string or number
+
+  // tab (remembered)
   const [idx, setIdx] = useState<number>(() => {
     const saved = Number(localStorage.getItem("liveFeedTab") ?? "0");
     return Number.isFinite(saved) ? saved : 0;
   });
   useEffect(() => localStorage.setItem("liveFeedTab", String(idx)), [idx]);
 
-  // A15–A17 (tab labels)
+  // tab titles (A15–A17)
   const titles = feed?.titles ?? ["Social", "Reviews", "Bank"];
 
-  // B15–B17 (text for current tab) -> parts -> joined with separators
+  // build scrolling line from B15–B17 (current tab)
   const raw = (feed?.texts?.[idx] ?? "").trim();
   const parts = useMemo(() => {
     if (!raw) return [];
@@ -25,14 +32,20 @@ const LiveFeedPanel: React.FC = () => {
       .map((s) => s.replace(/\s+/g, " ").trim())
       .filter(Boolean);
   }, [raw]);
-
   const line = parts.join(" • ");
-  const lastTime = updated ? new Date(updated).toLocaleTimeString() : "—";
 
-  // Optional stats (will show after Step 2)
-  const mentions = (feed as any)?.stats?.mentions as number | undefined;
-  const newReviews = (feed as any)?.stats?.newReviews as number | undefined;
-  const impressions = (feed as any)?.stats?.impressions as number | undefined;
+  // chips: try feed.stats first (if adapter already provides),
+  // else fall back to three well-known names to avoid empty UI.
+  const stats: Stat[] = useMemo(() => {
+    const s: any = (feed as any)?.stats || {};
+    const out: Stat[] = [];
+    if (s.mentions != null) out.push({ label: "Mentions", value: Number(s.mentions) });
+    if (s.newReviews != null) out.push({ label: "New Reviews", value: Number(s.newReviews) });
+    if (s.impressions != null) out.push({ label: "Impressions", value: Number(s.impressions) });
+    return out;
+  }, [feed]);
+
+  const lastTime = updated ? new Date(updated).toLocaleTimeString() : "—";
 
   return (
     <section className="lf card" role="region" aria-label="GCDC Live Feed">
@@ -65,38 +78,31 @@ const LiveFeedPanel: React.FC = () => {
         ))}
       </div>
 
-      {/* Seamless scrolling rail */}
+      {/* Seamless dual-track scroll — one tall rail */}
       <div className="lf-rail">
         <div className="lf-track">
-          <span className="lf-pill">{line}</span>
+          <span className="lf-pill">{line || "No items yet"}</span>
           <span className="lf-gap" />
-          <span className="lf-pill">{line}</span>
+          <span className="lf-pill">{line || "No items yet"}</span>
         </div>
         <div className="lf-track lf-track--alt">
-          <span className="lf-pill">{line}</span>
+          <span className="lf-pill">{line || "No items yet"}</span>
           <span className="lf-gap" />
-          <span className="lf-pill">{line}</span>
+          <span className="lf-pill">{line || "No items yet"}</span>
         </div>
       </div>
 
-      {/* Stats chips (show when values exist) */}
-      <div className="lf-stats">
-        {Number.isFinite(mentions as number) && (
-          <span className="lf-chip">
-            <span className="dot ok" /> Mentions: {mentions}
-          </span>
-        )}
-        {Number.isFinite(newReviews as number) && (
-          <span className="lf-chip">
-            <span className="dot ok" /> New Reviews: {newReviews}
-          </span>
-        )}
-        {Number.isFinite(impressions as number) && (
-          <span className="lf-chip">
-            <span className="dot ok" /> Impressions: {impressions}
-          </span>
-        )}
-      </div>
+      {/* Chips (Mentions / New Reviews / Impressions) when present */}
+      {stats.length > 0 && (
+        <div className="lf-stats">
+          {stats.map((s, i) => (
+            <span key={i} className="lf-chip">
+              <span className="dot ok" />
+              {s.label}: {s.value}
+            </span>
+          ))}
+        </div>
+      )}
     </section>
   );
 };
