@@ -1,5 +1,3 @@
-/* Innovue 3 — Live Feed (reference look, taller rail, NO bottom bar here) */
-
 :root{
     --lf-panel:#eef2f6;
     --lf-border:#d6dde6;
@@ -29,7 +27,7 @@
     gap:12px;
   }
   
-  /* Title row (left: title + updated; right: badge) */
+  /* Title row */
   .lf-titlebar{
     display:grid;
     grid-template-columns:1fr 44px;
@@ -53,13 +51,8 @@
     box-shadow:inset 0 0 0 2px rgba(0,0,0,.05), 0 2px 2px rgba(0,0,0,.12);
   }
   
-  /* Tabs (centered) */
-  .lf-tabs{
-    display:flex;
-    justify-content:center;
-    gap:10px;
-    flex-wrap:wrap;
-  }
+  /* Tabs */
+  .lf-tabs{ display:flex; justify-content:center; gap:10px; flex-wrap:wrap; }
   .lf-tab{
     appearance:none;
     border:1px solid var(--lf-border);
@@ -80,33 +73,41 @@
   }
   .lf-tab:hover{ transform:translateY(-1px); }
   
-  /* Tall blue rail — single static line */
+  /* Rail — seamless dual-track scroll */
   .lf-rail{
+    position:relative;
     background:var(--lf-rail-bg);
     border:1px solid var(--lf-rail-border);
     border-radius:12px;
-    height:56px; /* taller */
-    display:grid;
-    align-items:center;
+    height:56px;
     overflow:hidden;
-    padding:0 12px;
   }
-  .lf-line{
+  .lf-track{
+    position:absolute;
+    inset:0;
+    display:inline-flex;
+    align-items:center;
     white-space:nowrap;
-    text-overflow:ellipsis;
-    overflow:hidden;
+    animation:lf-marquee 22s linear infinite;
+  }
+  .lf-track--alt{
+    animation-name:lf-marquee-alt;
+  }
+  .lf-gap{ display:inline-block; width:48px; }
+  .lf-pill{
+    display:inline-block;
+    border:1px solid var(--lf-rail-border);
+    background:#fff;
+    color:#0b2540;
     font-weight:800;
-    font-size:16px;
     letter-spacing:.2px;
+    padding:10px 14px;
+    border-radius:10px;
+    margin-left:12px;
   }
   
-  /* Stats chips (centered, render only when values provided) */
-  .lf-stats{
-    display:flex;
-    gap:10px;
-    flex-wrap:wrap;
-    justify-content:center;
-  }
+  /* Stats chips */
+  .lf-stats{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
   .lf-chip{
     background:var(--lf-chip-bg);
     border:1px solid var(--lf-border);
@@ -121,6 +122,16 @@
   }
   .lf-chip .dot{ width:8px; height:8px; border-radius:50%; background:#c5c8d1; }
   .lf-chip .dot.ok{ background:var(--lf-chip-dot); }
+  
+  /* Keyframes */
+  @keyframes lf-marquee{
+    0%{ transform:translateX(0); }
+    100%{ transform:translateX(-50%); }
+  }
+  @keyframes lf-marquee-alt{
+    0%{ transform:translateX(-50%); }
+    100%{ transform:translateX(0); }
+  }
   
   /* Responsive */
   @media (max-width:560px){
