@@ -1,15 +1,48 @@
-/* src/styles/global.css */
-:root { --ink:#0f1720; --muted:#667085; --card:#fff; --bg:#f5f7fb; }
-*{box-sizing:border-box} html,body,#root{height:100%} body{margin:0;color:var(--ink);background:var(--bg);font-family:ui-sans-serif,system-ui,-apple-system,"Inter",Arial,sans-serif}
-.app{max-width:900px;margin:0 auto;padding:16px}
-.card{background:var(--card);border-radius:14px;box-shadow:0 1px 2px rgba(0,0,0,.06)}
-.row{display:grid;grid-template-columns:1fr;gap:12px}@media(min-width:640px){.row{grid-template-columns:repeat(2,1fr)}}
+/* Sticky Bottom Bar — minimal, clean, and out of the way */
 
-/* src/styles/topbar.css */
-/* (reserved for hero later) */
-
-/* src/styles/kpi.css */
-/* (reserved for KPI tiles later) */
-
-/* src/styles/bottom.css */
-/* (reserved for bottom bar later) */
+.bb.sticky-bar {
+    position: sticky;
+    bottom: 0;
+    z-index: 50;
+    /* subtle glass effect */
+    backdrop-filter: saturate(140%) blur(6px);
+    background: rgba(240, 244, 248, 0.86);
+    border-top: 1px solid #d6dde6;
+    padding: 10px 12px max(env(safe-area-inset-bottom), 10px);
+  }
+  
+  /* layout row */
+  .bb.inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+  }
+  
+  /* pills */
+  .bb.pill {
+    background: #f2f4f8;
+    border: 1px solid #d6dde6;
+    color: #0b1220;
+    border-radius: 999px;
+    padding: 8px 12px;
+    font-weight: 700;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+  }
+  .bb.pill.ok {
+    background: #e8fff3;
+    border-color: #b6edd3;
+  }
+  
+  /* small screens */
+  @media (max-width: 520px) {
+    .bb.inner {
+      justify-content: space-between;
+      gap: 8px;
+    }
+  }
