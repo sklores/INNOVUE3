@@ -1,63 +1,43 @@
-// src/app/selectors.ts
-import { useAppState } from "./state";
-import { METRIC_DIRECTION, TARGETS } from "./config";
-import { valueToColorUp, valueToColorDown } from "../lib/color";
+import { useAppContext } from "./state";
+import type { Weather } from "../data/weatherClient";
 
-/** ---------- Core state hooks ---------- */
-export function useKpis() {
-  return useAppState().kpis;
-}
-export function useLastUpdated() {
-  return useAppState().lastUpdated.sheets;
-}
-export function useLoadingError() {
-  const { loading, error } = useAppState();
-  return { loading, error };
-}
-export function useViewRange() {
-  return useAppState().viewRange;
-}
-export function useSplashActive() {
-  return useAppState().splashActive;
-}
-export function useBeamTriggerToken() {
-  return useAppState().beamTriggerToken;
-}
+// --- existing hooks your code uses ---
 export function useFeed() {
-  return useAppState().feed;
+  const { data } = useAppContext();
+  return data?.feed;
+}
+export function useLastUpdated(): number | null {
+  const { lastUpdated } = useAppContext();
+  return lastUpdated;
+}
+export function useKpis() {
+  const { data } = useAppContext();
+  return data?.kpis ?? {};
 }
 
-/** ---------- KPI color & percent helpers (used by KPI tiles) ---------- */
-function clamp01(v: number) { return Math.max(0, Math.min(1, v)); }
-
-export function tilePercent(metric: keyof typeof TARGETS, value?: number): number {
-  const v = typeof value === "number" ? value : 0;
-  const tgt = TARGETS[metric] || 1;
-  if (tgt <= 0) return 0;
-  if (METRIC_DIRECTION[metric] === "down") {
-    return Math.round(clamp01(1 - v / tgt) * 100);
-  }
-  return Math.round(clamp01(v / tgt) * 100);
+// --- new: shared clock + weather ---
+export function useDateTime(): number {
+  const { now } = useAppContext();
+  return now; // epoch ms
+}
+export function useWeather(): Weather | null {
+  const { weather } = useAppContext();
+  return weather;
 }
 
-export function tileColor(metric: keyof typeof TARGETS, value?: number): string {
-  const v = typeof value === "number" ? value : 0;
-  const tgt = TARGETS[metric] || 1;
-  if (METRIC_DIRECTION[metric] === "down") {
-    return valueToColorDown(v, tgt);
-  }
-  return valueToColorUp(v, tgt);
+// --- compatibility helpers some files referenced earlier ---
+export function tileColor(value: number | undefined, opts?: { invert?: boolean }) {
+  if (value == null || Number.isNaN(Number(value))) return "#e5e7eb";
+  const v = Math.max(0, Math.min(100, Number(value)));
+  const g = Math.round((v / 100) * 200 + 30);
+  const r = Math.round(((100 - v) / 100) * 200 + 30);
+  const base = `rgb(${r}, ${g}, 80)`;
+  return opts?.invert ? `rgb(${g}, ${r}, 80)` : base;
 }
-
-/** ---------- Optional text formatters ---------- */
-export function fmtMoney(n?: number) {
-  return typeof n === "number"
-    ? n.toLocaleString(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 })
-    : "—";
+export function useBeamTriggerToken(): number {
+  const t = useLastUpdated();
+  return t ?? 0;
 }
-export function fmtNumber(n?: number) {
-  return typeof n === "number" ? n.toLocaleString() : "—";
-}
-export function fmtPct(n?: number) {
-  return typeof n === "number" ? `${Math.round(n)}%` : "—";
+export function useSplashActive(): boolean {
+  return false;
 }

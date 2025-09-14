@@ -1,120 +1,106 @@
-import React, { createContext, useContext, useEffect, useReducer } from "react";
-import { POLL } from "./config";
+import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { adapt, type AppData } from "../data/adapters";
+import { fetchAll } from "../data/sheetsClient";
 import { startPoller } from "../data/poller";
-import { fetchBatchValues } from "../data/sheetsClient";
-import { allRanges } from "../data/sheetMap";
-import { adaptKpis, adaptOverrides, mergeOverrides, type KPIData, type Overrides, adaptLiveFeed, type LiveFeed } from "../data/adapters";
+import { fetchWeather, type Weather } from "../data/weatherClient";
+import * as cfg from "./config";
 
-type AppState = {
-  kpis: KPIData | null;
-  overrides: Overrides | null;
-  feed: LiveFeed | null;
+type AppCtxType = {
+  data: AppData | null;
+  lastUpdated: number | null;
   loading: boolean;
-  error?: string;
-  lastUpdated: { sheets?: number };
-  viewRange: "day" | "week" | "month";
-  splashActive: boolean;
-  beamTriggerToken?: number;
+  error: string | null;
+
+  // New: shared clock + weather
+  now: number;          // epoch ms, updates on each poll tick
+  weather: Weather | null;
+
+  // Legacy helpers
+  _refreshNow?: () => Promise<void>;
 };
 
-type Action =
-  | { type: "loading" }
-  | { type: "sheets"; payload: { kpis: KPIData; overrides: Overrides; feed: LiveFeed } }
-  | { type: "error"; payload: string }
-  | { type: "setRange"; payload: AppState["viewRange"] }
-  | { type: "clearError" }
-  | { type: "splashOff" }
-  | { type: "beamPulse" };
+const AppCtx = createContext<AppCtxType>({
+  data: null,
+  lastUpdated: null,
+  loading: true,
+  error: null,
+  now: Date.now(),
+  weather: null,
+  _refreshNow: undefined,
+});
 
-const Ctx = createContext<{ state: AppState; dispatch: React.Dispatch<Action> } | null>(null);
-
-function reducer(state: AppState, action: Action): AppState {
-  switch (action.type) {
-    case "loading":
-      return { ...state, loading: true, error: undefined };
-    case "sheets":
-      return {
-        ...state,
-        loading: false,
-        error: undefined,
-        kpis: action.payload.kpis,
-        overrides: action.payload.overrides,
-        feed: action.payload.feed,
-        lastUpdated: { ...state.lastUpdated, sheets: Date.now() },
-      };
-    case "error":
-      return { ...state, loading: false, error: action.payload };
-    case "setRange":
-      return { ...state, viewRange: action.payload };
-    case "clearError":
-      return { ...state, error: undefined };
-    case "splashOff":
-      return { ...state, splashActive: false };
-    case "beamPulse":
-      return { ...state, beamTriggerToken: Date.now() };
-    default:
-      return state;
-  }
+// Legacy-compat exported API expected elsewhere:
+let refreshNowImpl: (() => Promise<void>) | null = null;
+export async function refreshNow(): Promise<void> {
+  if (refreshNowImpl) return refreshNowImpl();
+  return Promise.resolve();
+}
+export function useAppDispatch() {
+  return { refreshNow };
 }
 
-export const AppProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const [state, dispatch] = useReducer(reducer, {
-    kpis: null,
-    overrides: null,
-    feed: null,
-    loading: true,
-    lastUpdated: {},
-    viewRange: "day",
-    splashActive: true,
-  });
+export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [data, setData] = useState<AppData | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<number | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // New shared clock + weather
+  const [now, setNow] = useState<number>(Date.now());
+  const [weather, setWeather] = useState<Weather | null>(null);
+
+  const intervalMs = useMemo<number>(() => {
+    const v =
+      (cfg as any)?.pollIntervalMs ??
+      (cfg as any)?.POLL_INTERVAL_MS ??
+      (cfg as any)?.config?.pollIntervalMs ??
+      5000;
+    return Number.isFinite(v) ? Number(v) : 5000;
+  }, []);
+
+  const doRefresh = async () => {
+    try {
+      // Run Sheets + Weather in parallel
+      const [raw, wx] = await Promise.all([fetchAll(), fetchWeather()]);
+      const next = adapt(raw);
+      setData(next);
+      setLastUpdated(Date.now());
+      setWeather(wx);
+      setNow(Date.now());
+      setError(null);
+    } catch (err: unknown) {
+      console.error("refresh error", err);
+      setError(err instanceof Error ? err.message : String(err));
+      // Keep prior data; still advance clock so UI doesn’t freeze
+      setNow(Date.now());
+    }
+  };
 
   useEffect(() => {
-    dispatch({ type: "loading" });
-    const stop = startPoller(
-      { sheetsMs: POLL.SHEETS_MS, timeMs: POLL.TIME_MS, weatherMs: POLL.WEATHER_MS },
-      (payload) => dispatch({ type: "sheets", payload }),
-      (msg) => dispatch({ type: "error", payload: msg })
-    );
-    return () => stop();
+    refreshNowImpl = doRefresh;
+    return () => {
+      refreshNowImpl = null;
+    };
   }, []);
 
   useEffect(() => {
-    if (!state.splashActive) return;
-    const t = setTimeout(() => dispatch({ type: "splashOff" }), 4000);
-    return () => clearTimeout(t);
-  }, [state.splashActive]);
+    let first = true;
+    const stop = startPoller(intervalMs, async () => {
+      await doRefresh();
+      if (first) {
+        setLoading(false);
+        first = false;
+      }
+    });
+    return () => stop();
+  }, [intervalMs]);
 
-  useEffect(() => {
-    if (!state.error) return;
-    const t = setTimeout(() => dispatch({ type: "clearError" }), 4000);
-    return () => clearTimeout(t);
-  }, [state.error]);
+  const value = useMemo(
+    () => ({ data, lastUpdated, loading, error, now, weather, _refreshNow: doRefresh }),
+    [data, lastUpdated, loading, error, now, weather]
+  );
 
-  return <Ctx.Provider value={{ state, dispatch }}>{children}</Ctx.Provider>;
+  return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>;
 };
 
-export function useAppState() {
-  const c = useContext(Ctx);
-  if (!c) throw new Error("useAppState must be used within <AppProvider>");
-  return c.state;
-}
-export function useAppDispatch() {
-  const c = useContext(Ctx);
-  if (!c) throw new Error("useAppDispatch must be used within <AppProvider>");
-  return c.dispatch;
-}
-
-// Manual refresh + beam pulse
-export async function refreshNow(dispatch: React.Dispatch<Action>) {
-  try {
-    const raw = await fetchBatchValues(allRanges);
-    const base = adaptKpis(raw);
-    const ov   = adaptOverrides(raw) ?? { testMode: false };
-    const kpis = mergeOverrides(base, ov);
-    const feed = adaptLiveFeed(raw);
-    dispatch({ type: "sheets", payload: { kpis, overrides: ov, feed } });
-    dispatch({ type: "beamPulse" });
-  } catch (e: any) {
-    dispatch({ type: "error", payload: e?.message ?? "Sheets error" });
-  }
-}
+export const useAppContext = (): AppCtxType => useContext(AppCtx);

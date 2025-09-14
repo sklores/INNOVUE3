@@ -1,38 +1,42 @@
 import React, { useMemo } from "react";
-import { useLastUpdated } from "../app/selectors";
+import { useDateTime, useWeather, useLastUpdated } from "../app/selectors";
 
 /**
- * Sticky bottom status bar
- * - Left → three pills: Day/Date • Weather • API status
- * - No refresh button (per request)
- * - No data-layer changes — weather is a placeholder you can later wire to your selector
+ * Sticky bottom status bar (live):
+ *  - Date (from shared clock)
+ *  - Weather condition + temp (Open-Meteo)
+ *  - API status (green once Sheets has returned at least once)
+ * No refresh button here.
  */
 const BottomBar: React.FC = () => {
+  const now = useDateTime();
+  const wx = useWeather();
   const updated = useLastUpdated();
 
-  // Date pill: e.g., "Sun, Sep 14"
   const dateLabel = useMemo(() => {
-    const d = new Date();
+    const d = new Date(now);
     return d.toLocaleDateString(undefined, {
       weekday: "short",
       month: "short",
       day: "numeric",
     });
-  }, []);
+  }, [now]);
 
-  // Weather placeholder until wired (you can replace with useWeather() later)
-  const weatherLabel = "Cloudy · —°";
+  const weatherLabel = useMemo(() => {
+    if (!wx) return "—";
+    const t = wx.tempC != null ? Math.round(wx.tempC) : null;
+    // If you prefer °F in the UI: const f = t != null ? Math.round(t * 9/5 + 32) : null;
+    return t != null ? `${wx.condition} · ${t}°` : wx.condition || "—";
+  }, [wx]);
 
-  // API status: green if we've ever fetched; neutral if not yet
   const apiOk = Boolean(updated);
-  const apiLabel = apiOk ? "API OK" : "API —";
 
   return (
     <footer className="bb sticky-bar" aria-label="Bottom Status">
       <div className="bb inner">
         <div className="bb pill">{dateLabel}</div>
         <div className="bb pill">{weatherLabel}</div>
-        <div className={`bb pill ${apiOk ? "ok" : ""}`}>{apiLabel}</div>
+        <div className={`bb pill ${apiOk ? "ok" : ""}`}>{apiOk ? "API OK" : "API —"}</div>
       </div>
     </footer>
   );
