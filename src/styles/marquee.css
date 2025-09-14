@@ -1,140 +1,172 @@
-/* src/styles/marquee.css */
+/* src/styles/marquee.css
+   Innovue 3 — Live Feed (old aesthetic, taller, no animation)
+   NOTE: No motion. Content is live from Sheets (B15–B17). */
 
-/* Panel container (tall, standalone) */
-.lf {
-    padding: 0;
+   :root {
+    /* panel + accents */
+    --lf-panel: #eef2f6;
+    --lf-border: #d6dde6;
+    --lf-shadow: 0 6px 22px rgba(20, 24, 40, 0.14);
+  
+    --lf-pill-bg: #ffffff;
+    --lf-pill-fg: #0f172a;
+    --lf-pill-active-bg: #0f1a2b;
+    --lf-pill-active-fg: #ffffff;
+  
+    --lf-ticker-bg: #dcecff;
+    --lf-ticker-border: #c9defd;
+  
+    --lf-chip-bg: #f5f7fb;
+    --lf-chip-dot: #18c26e;
+  
+    --lf-status-bg: #f2f4f8;
+  }
+  
+  .livefeed-card {
+    background: var(--lf-panel);
+    border: 1px solid var(--lf-border);
     border-radius: 18px;
-    box-shadow: 0 8px 28px rgba(16,24,40,0.12);
-    overflow: hidden;
-    margin-top: 16px;
-  }
-  
-  /* Header: Last Updated (left) + Title (center) + Tabs (right) */
-  .lf-header {
+    box-shadow: var(--lf-shadow);
+    color: #0b1220;
+    padding: 18px;
     display: grid;
-    grid-template-columns: 1fr auto auto;
-    align-items: center;
-    gap: 10px;
-    padding: 12px 16px;
-    border-bottom: 1px solid rgba(16,24,40,0.08);
-    background: #ffffff;
+    gap: 12px;
   }
   
-  .lf-updated {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-  }
-  .lf-upd-label {
-    font-size: 12px;
-    color: var(--muted);
-  }
-  .lf-upd-time {
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--ink);
+  /* Top row */
+  .lf-top {
+    display: grid;
+    grid-template-columns: 1fr auto 44px;
+    align-items: center;
+    gap: 12px;
   }
   
-  .lf-title-wrap {
-    display: inline-flex;
+  .lf-top-left {
+    display: inline-grid;
+    grid-auto-flow: column;
     align-items: center;
     gap: 8px;
-    justify-self: center;
   }
+  
+  .lf-muted { color: #667085; font-size: 13px; font-weight: 600; }
+  .lf-time  { font-weight: 800; letter-spacing: .2px; }
+  
   .lf-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 999px;
-    background: #0ea5a5;
-    box-shadow: 0 0 0 3px rgba(14,165,165,0.15);
-  }
-  .lf-title {
-    font-weight: 800;
-    letter-spacing: 0.3px;
-    font-size: 14px;
-    color: var(--ink);
-    opacity: 0.9;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #19c26e;
+    box-shadow: 0 0 0 2px rgba(25,194,110,.18);
   }
   
-  .lf-tabs {
-    display: inline-flex;
-    gap: 8px;
-    justify-self: end;
-    flex-wrap: wrap;
-  }
-  .lf-tab {
-    font: inherit;
-    padding: 8px 12px;
+  .lf-title { font-weight: 700; }
+  
+  /* Pills */
+  .lf-pills { display: flex; gap: 10px; flex-wrap: wrap; }
+  .lf-pill {
+    appearance: none;
+    border: 1px solid var(--lf-border);
+    background: var(--lf-pill-bg);
+    color: var(--lf-pill-fg);
     border-radius: 999px;
-    border: 1px solid rgba(16,24,40,0.12);
-    background: #fff;
-    color: var(--ink);
+    padding: 8px 14px;
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 1;
     cursor: pointer;
-    min-height: 34px;
+    transition: transform .06s ease, background .2s ease, color .2s ease, border-color .2s ease;
   }
-  .lf-tab--active {
-    background: #0b2b49;
-    border-color: #0b2b49;
-    color: #fff;
+  .lf-pill:hover { transform: translateY(-1px); }
+  .lf-pill[aria-selected="true"] {
+    background: var(--lf-pill-active-bg);
+    color: var(--lf-pill-active-fg);
+    border-color: var(--lf-pill-active-bg);
   }
   
-  /* Body: tall scroller */
-  .lf-body {
-    position: relative;
+  /* Badge (right) */
+  .lf-badge { display: grid; place-items: center; }
+  .lf-badge__medal {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #ffe585, #f3b94a 60%, #c88b2b 100%);
+    box-shadow: inset 0 0 0 2px rgba(0,0,0,.05), 0 2px 2px rgba(0,0,0,.12);
+  }
+  
+  /* Ticker: TALLER, no animation */
+  .lf-ticker {
+    background: var(--lf-ticker-bg);
+    border: 1px solid var(--lf-ticker-border);
+    border-radius: 12px;
+    height: 56px; /* taller */
+    display: grid;
+    align-items: center;
     overflow: hidden;
-    background: linear-gradient(180deg, #fbfdff 0%, #f7fbff 100%);
-    padding: 14px 0 16px 0;
-    height: clamp(220px, 28vh, 320px);
+    padding: 0 12px;
   }
   
-  /* Two synchronized tracks for seamless loop */
-  .lf-track {
-    --lf-speed: 24000ms;
-    display: inline-flex;
-    align-items: center;
-    gap: 22px;
+  .lf-ticker-line {
+    /* no keyframes; just a single line that can overflow/scroll if long */
     white-space: nowrap;
-    will-change: transform;
-    animation: lf-scroll var(--lf-speed) linear infinite;
-    padding-left: 16px;
-  }
-  .lf-track--alt {
-    position: absolute;
-    left: 0;
-    top: 0;
-    animation-delay: calc(var(--lf-speed) / 2);
+    font-weight: 800;
+    font-size: 16px;
+    letter-spacing: .2px;
+    text-overflow: ellipsis;
+    overflow: hidden;
   }
   
-  @keyframes lf-scroll {
-    from { transform: translateX(0); }
-    to   { transform: translateX(-50%); }
-  }
-  
-  /* Pause on hover/focus */
-  .lf-body:hover .lf-track,
-  .lf-body:focus-within .lf-track {
-    animation-play-state: paused;
-  }
-  
-  /* Chips: larger, can wrap to 2 lines for readability */
+  /* Chips row */
+  .lf-chips { display: flex; gap: 10px; flex-wrap: wrap; }
   .lf-chip {
-    display: inline-flex;
+    background: var(--lf-chip-bg);
+    border: 1px solid var(--lf-border);
+    border-radius: 999px;
+    padding: 8px 12px;
+    font-weight: 700;
+    display: inline-grid;
+    grid-auto-flow: column;
     align-items: center;
-    max-width: 60ch;
-    white-space: normal;
-    line-height: 1.25;
-    padding: 10px 14px;
-    border-radius: 14px;
-    background: #f4f7fb;
-    color: var(--ink);
-    font-weight: 600;
-    font-size: 14px;
-    box-shadow: inset 0 0 0 1px rgba(16,24,40,0.08);
+    gap: 6px;
+    color: #0b1220;
   }
+  .lf-chip .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #c5c8d1;
+  }
+  .lf-chip .dot.ok { background: var(--lf-chip-dot); }
+  .lf-chip .label { color: #6b7280; }
   
-  /* Spacer between duplicated runs */
-  .lf-gap {
-    display: inline-block;
-    width: 40px;
-    height: 1px;
+  /* Bottom status row */
+  .lf-bottom {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 12px;
+    margin-top: 2px;
+  }
+  .lf-status-left { display: flex; gap: 10px; flex-wrap: wrap; }
+  
+  .lf-pill-status {
+    background: var(--lf-status-bg);
+    border: 1px solid var(--lf-border);
+    border-radius: 999px;
+    padding: 8px 12px;
+    font-weight: 700;
+    color: #0b1220;
+  }
+  .lf-pill-status.ok {
+    border-color: #b6edd3;
+    background: #e8fff3;
+  }
+  .lf-button {
+    background: var(--lf-status-bg);
+    border: 1px solid var(--lf-border);
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: transform .06s ease;
+  }
+  .lf-button:hover { transform: translateY(-1px); }
+  
+  /* Responsive */
+  @media (max-width: 560px) {
+    .lf-top { grid-template-columns: 1fr; }
+    .lf-badge { display: none; }
   }
