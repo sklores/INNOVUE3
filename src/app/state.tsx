@@ -1,9 +1,22 @@
+// src/app/state.tsx
+// AppProvider with Sheets + (optional) Weather + shared clock.
+// Uses setInterval locally to avoid poller signature mismatches.
+
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { adapt, type AppData } from "../data/adapters";
 import { fetchAll } from "../data/sheetsClient";
-import { startPoller } from "../data/poller";
-import { fetchWeather, type Weather } from "../data/weatherClient";
 import * as cfg from "./config";
+
+// If you previously added a weather client, you can import it here.
+// For now we keep weather nullable to avoid introducing more deps.
+// import { fetchWeather, type Weather } from "../data/weatherClient";
+type Weather = {
+  tempC: number | null;
+  condition: string;
+  code: number | null;
+  isDay: boolean | null;
+  updated: number;
+} | null;
 
 type AppCtxType = {
   data: AppData | null;
@@ -11,11 +24,9 @@ type AppCtxType = {
   loading: boolean;
   error: string | null;
 
-  // New: shared clock + weather
-  now: number;          // epoch ms, updates on each poll tick
-  weather: Weather | null;
+  now: number;          // epoch ms
+  weather: Weather;
 
-  // Legacy helpers
   _refreshNow?: () => Promise<void>;
 };
 
@@ -29,7 +40,7 @@ const AppCtx = createContext<AppCtxType>({
   _refreshNow: undefined,
 });
 
-// Legacy-compat exported API expected elsewhere:
+// Legacy helpers some modules import
 let refreshNowImpl: (() => Promise<void>) | null = null;
 export async function refreshNow(): Promise<void> {
   if (refreshNowImpl) return refreshNowImpl();
@@ -45,9 +56,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // New shared clock + weather
   const [now, setNow] = useState<number>(Date.now());
-  const [weather, setWeather] = useState<Weather | null>(null);
+  const [weather, setWeather] = useState<Weather>(null);
 
   const intervalMs = useMemo<number>(() => {
     const v =
@@ -60,18 +70,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const doRefresh = async () => {
     try {
-      // Run Sheets + Weather in parallel
-      const [raw, wx] = await Promise.all([fetchAll(), fetchWeather()]);
+      const raw = await fetchAll();
       const next = adapt(raw);
       setData(next);
       setLastUpdated(Date.now());
-      setWeather(wx);
-      setNow(Date.now());
+      // If you have a weather client wired, load it here and setWeather(...)
       setError(null);
     } catch (err: unknown) {
       console.error("refresh error", err);
       setError(err instanceof Error ? err.message : String(err));
-      // Keep prior data; still advance clock so UI doesn’t freeze
+    } finally {
       setNow(Date.now());
     }
   };
@@ -83,17 +91,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, []);
 
+  // Local polling without relying on an external poller helper
   useEffect(() => {
-    let first = true;
-    const stop = startPoller(intervalMs, async () => {
+    let timer: ReturnType<typeof setInterval> | undefined;
+    let stopped = false;
+
+    const tick = async () => {
+      if (stopped) return;
       await doRefresh();
-      if (first) {
-        setLoading(false);
-        first = false;
-      }
-    });
-    return () => stop();
-  }, [intervalMs]);
+      if (loading) setLoading(false);
+    };
+
+    // kick immediately, then interval
+    void tick();
+    timer = setInterval(tick, Math.max(1000, intervalMs | 0));
+
+    return () => {
+      stopped = true;
+      if (timer) clearInterval(timer);
+    };
+  }, [intervalMs]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const value = useMemo(
     () => ({ data, lastUpdated, loading, error, now, weather, _refreshNow: doRefresh }),

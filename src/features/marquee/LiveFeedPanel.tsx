@@ -1,43 +1,34 @@
-// Innovue 3 — Marquee (M1 visuals only)
-// Title + Last Updated, centered tabs (A15–A17), tall blue rail with smooth scroll
-// Reads live text from B15–B17 via useFeed(); chips render only if feed.stats exists.
-// NO data-layer edits here.
-
+// src/features/marquee/LiveFeedPanel.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useFeed, useLastUpdated } from "../../app/selectors";
 
-// Split on sequences of dashes (-----) and longer em/en dashes (—— / ––)
 const SPLIT_REGEX = /-{3,}|—{2,}|–{2,}/g;
 
 type Stat = { label: string; value: number };
 
 const LiveFeedPanel: React.FC = () => {
-  const feed = useFeed();                  // { titles: string[], texts: string[], stats?: {...} }
-  const updated = useLastUpdated();        // number | null (epoch ms)
+  const feed = useFeed();
+  const updated = useLastUpdated();
 
-  // Remember the selected tab locally
   const [idx, setIdx] = useState<number>(() => {
     const saved = Number(localStorage.getItem("liveFeedTab") ?? "0");
     return Number.isFinite(saved) ? saved : 0;
   });
   useEffect(() => localStorage.setItem("liveFeedTab", String(idx)), [idx]);
 
-  // Tab labels from A15–A17
   const titles = feed?.titles ?? ["Social", "Reviews", "Bank"];
 
-  // Current tab’s text from B15–B17 -> split -> join with •
   const raw = (feed?.texts?.[idx] ?? "").trim();
-  const parts = useMemo(() => {
+  const parts = useMemo<string[]>(() => {
     if (!raw) return [];
     return raw
       .split(SPLIT_REGEX)
-      .map((s) => s.replace(/\s+/g, " ").trim())
-      .filter(Boolean);
+      .map((s: string) => s.replace(/\s+/g, " ").trim())
+      .filter((s: string) => Boolean(s));
   }, [raw]);
 
   const line = parts.join(" • ");
 
-  // Optional stats (only display if provided by state already)
   const stats: Stat[] = useMemo(() => {
     const s: any = (feed as any)?.stats || {};
     const out: Stat[] = [];
@@ -51,7 +42,6 @@ const LiveFeedPanel: React.FC = () => {
 
   return (
     <section className="lf card" role="region" aria-label="GCDC Live Feed">
-      {/* Title row */}
       <div className="lf-titlebar">
         <div className="lf-title-left">
           <span className="lf-title-main">GCDC Live Feed</span>
@@ -64,9 +54,8 @@ const LiveFeedPanel: React.FC = () => {
         </div>
       </div>
 
-      {/* Centered pill tabs */}
       <div className="lf-tabs" role="tablist" aria-label="Feed toggles">
-        {titles.map((t, i) => (
+        {titles.map((t: string, i: number) => (
           <button
             key={`tab-${i}`}
             role="tab"
@@ -80,7 +69,6 @@ const LiveFeedPanel: React.FC = () => {
         ))}
       </div>
 
-      {/* Tall blue rail — seamless dual-track scroll */}
       <div className="lf-rail">
         <div className="lf-track">
           <span className="lf-pill">{line || "No items yet"}</span>
@@ -94,7 +82,6 @@ const LiveFeedPanel: React.FC = () => {
         </div>
       </div>
 
-      {/* Chips (render only if values exist) */}
       {stats.length > 0 && (
         <div className="lf-stats">
           {stats.map((s, i) => (
