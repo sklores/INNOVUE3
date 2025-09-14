@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useAppContext } from "./state";
 
 // --- existing hooks your code uses ---
@@ -29,13 +30,23 @@ export function useWeather(): unknown | null {
 }
 
 /**
+ * NEW: useViewRange — minimal, non-breaking stub so SegmentedControl.tsx can mount.
+ * It returns a tuple [range, setRange] like a normal React state hook.
+ * Values: "day" | "week" | "month" (lowercase to be predictable).
+ * You can wire this to real app state later; for now it’s local-only to prevent crashes.
+ */
+export function useViewRange(): [("day" | "week" | "month"), (v: "day" | "week" | "month") => void] {
+  const [range, setRange] = useState<"day" | "week" | "month">("day");
+  return [range, setRange];
+}
+
+/**
  * Robust color helper: accepts ANY value, never throws.
  * - Tries to coerce to number; if not a valid number → neutral gray.
- * - Maps 0..100 to a red→green ramp (simple, readable default).
+ * - Maps 0..100 to a red→green ramp (simple default).
  * - `opts.invert` flips the ramp if you use “lower is better” KPIs.
  */
 export function tileColor(value: unknown, opts?: { invert?: boolean }): string {
-  // handle undefined/null/objects/strings safely
   const n = coerceNumber(value);
   if (n == null) return "#e5e7eb"; // neutral gray
 
@@ -50,12 +61,10 @@ export function tileColor(value: unknown, opts?: { invert?: boolean }): string {
 function coerceNumber(v: unknown): number | null {
   if (typeof v === "number" && Number.isFinite(v)) return v;
   if (typeof v === "string") {
-    // strip common formatting like "$", "%", commas
     const cleaned = v.replace(/[^\d.-]/g, "");
     const parsed = Number(cleaned);
     if (Number.isFinite(parsed)) return parsed;
   }
-  // tolerate objects like { value: 42 }
   if (typeof v === "object" && v !== null) {
     // @ts-expect-error best-effort extraction
     const maybe = (v.value ?? v.val ?? v.amount) as unknown;
