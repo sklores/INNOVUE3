@@ -16,36 +16,66 @@ export function useKpis() {
   return data?.kpis ?? {};
 }
 
-// --- new/shared clock + weather (aligned to AppCtxType) ---
+// --- shared clock (epoch ms) ---
 export function useDateTime(): number {
   const { now } = useAppContext();
-  return now; // epoch ms
+  return now;
 }
 
-/**
- * Matches AppCtxType.weather (unknown | null) so TS stops failing.
- * When we finalize a Weather type and wire the client, we'll narrow this.
- */
+// --- weather placeholder: matches AppCtxType.weather (unknown | null) ---
 export function useWeather(): unknown | null {
   const { weather } = useAppContext();
   return weather;
 }
 
-// --- compatibility helpers some modules reference ---
-export function tileColor(value: number | undefined, opts?: { invert?: boolean }) {
-  if (value == null || Number.isNaN(Number(value))) return "#e5e7eb";
-  const v = Math.max(0, Math.min(100, Number(value)));
-  const g = Math.round((v / 100) * 200 + 30);
-  const r = Math.round(((100 - v) / 100) * 200 + 30);
+/**
+ * Robust color helper: accepts ANY value, never throws.
+ * - Tries to coerce to number; if not a valid number → neutral gray.
+ * - Maps 0..100 to a red→green ramp (simple, readable default).
+ * - `opts.invert` flips the ramp if you use “lower is better” KPIs.
+ */
+export function tileColor(value: unknown, opts?: { invert?: boolean }): string {
+  // handle undefined/null/objects/strings safely
+  const n = coerceNumber(value);
+  if (n == null) return "#e5e7eb"; // neutral gray
+
+  const clamped = Math.max(0, Math.min(100, n));
+  const g = Math.round((clamped / 100) * 200 + 30);
+  const r = Math.round(((100 - clamped) / 100) * 200 + 30);
   const base = `rgb(${r}, ${g}, 80)`;
   return opts?.invert ? `rgb(${g}, ${r}, 80)` : base;
 }
 
+/** Safe numeric coercion: returns number 0..100 or null */
+function coerceNumber(v: unknown): number | null {
+  if (typeof v === "number" && Number.isFinite(v)) return v;
+  if (typeof v === "string") {
+    // strip common formatting like "$", "%", commas
+    const cleaned = v.replace(/[^\d.-]/g, "");
+    const parsed = Number(cleaned);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  // tolerate objects like { value: 42 }
+  if (typeof v === "object" && v !== null) {
+    // @ts-expect-error best-effort extraction
+    const maybe = (v.value ?? v.val ?? v.amount) as unknown;
+    if (typeof maybe === "number" && Number.isFinite(maybe)) return maybe;
+    if (typeof maybe === "string") {
+      const cleaned = maybe.replace(/[^\d.-]/g, "");
+      const parsed = Number(cleaned);
+      if (Number.isFinite(parsed)) return parsed;
+    }
+  }
+  return null;
+}
+
+/** Used by scenic effects as a “change token” */
 export function useBeamTriggerToken(): number {
   const t = useLastUpdated();
   return t ?? 0;
 }
 
+/** Splash overlay toggle — keep false for stability unless wired */
 export function useSplashActive(): boolean {
   return false;
 }
