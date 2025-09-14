@@ -1,18 +1,16 @@
 import React, { useMemo } from "react";
-// ✅ Import from app selectors (not "./state")
-import { useDateTime, useLastUpdated, useWeather } from "../app/selectors";
+import { useDateTime, useLastUpdated } from "../app/selectors";
 
 /**
- * Sticky bottom status bar (safe):
+ * Sticky bottom status bar (no weather dependency):
  *  - Date from shared clock
- *  - Weather (null-safe; shows "—" if unavailable)
+ *  - Weather pill shows "—" for now (we'll wire it in a separate slice)
  *  - API status (green once Sheets has returned at least once)
  * No refresh button.
  */
 const BottomBar: React.FC = () => {
   const now = useDateTime();
   const updated = useLastUpdated();
-  const wx = useWeather(); // unknown | null (stub for now)
 
   const dateLabel = useMemo(() => {
     const d = new Date(now);
@@ -23,19 +21,7 @@ const BottomBar: React.FC = () => {
     });
   }, [now]);
 
-  const weatherLabel = useMemo(() => {
-    if (!wx || typeof wx !== "object") return "—";
-    const obj = wx as Record<string, unknown>;
-    const condition =
-      typeof obj.condition === "string" && obj.condition.trim().length
-        ? (obj.condition as string)
-        : "—";
-    const t =
-      typeof obj.tempC === "number" && Number.isFinite(obj.tempC as number)
-        ? Math.round(obj.tempC as number)
-        : null;
-    return t != null ? `${condition} · ${t}°` : condition;
-  }, [wx]);
+  const weatherLabel = "—"; // placeholder only; prevents crashes until weather is wired
 
   const apiOk = Boolean(updated);
 
