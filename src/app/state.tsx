@@ -8,7 +8,8 @@ type AppCtxType = {
   lastUpdated: number | null;
   loading: boolean;
   error: string | null;
-  now: number;                 // shared clock
+  now: number;                 // shared clock tick
+  weather: unknown | null;     // kept for compatibility; safe null for now
   _refreshNow?: () => Promise<void>;
 };
 
@@ -18,6 +19,7 @@ const AppCtx = createContext<AppCtxType>({
   loading: true,
   error: null,
   now: Date.now(),
+  weather: null,
   _refreshNow: undefined,
 });
 
@@ -89,7 +91,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [intervalMs]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const value = useMemo(
-    () => ({ data, lastUpdated, loading, error, now, _refreshNow: doRefresh }),
+    () => ({
+      data,
+      lastUpdated,
+      loading,
+      error,
+      now,
+      weather: null,           // placeholder for compatibility
+      _refreshNow: doRefresh,
+    }),
     [data, lastUpdated, loading, error, now]
   );
 
