@@ -1,14 +1,9 @@
 // src/data/poller.ts
-
-// Runtime (value) imports
-import { adaptKpis, adaptOverrides, mergeOverrides } from "./adapters";
-// Type-only imports
-import type { KPIData, Overrides } from "./adapters";
-
+import { adaptKpis, adaptOverrides, mergeOverrides, adaptLiveFeed, type KPIData, type Overrides, type LiveFeed } from "./adapters";
 import { allRanges } from "./sheetMap";
 import { fetchBatchValues } from "./sheetsClient";
 
-export type OnData = (payload: { kpis: KPIData; overrides: Overrides }) => void;
+export type OnData = (payload: { kpis: KPIData; overrides: Overrides; feed: LiveFeed }) => void;
 export type OnError = (message: string) => void;
 
 export type PollerConfig = {
@@ -30,14 +25,15 @@ export function startPoller(cfg: PollerConfig, onData: OnData, onError: OnError)
 
       const raw = await fetchBatchValues(allRanges, ctrl.signal);
       const base = adaptKpis(raw);
-      const ov = adaptOverrides(raw) ?? { testMode: false };
+      const ov   = adaptOverrides(raw) ?? { testMode: false };
       const kpis = mergeOverrides(base, ov);
+      const feed = adaptLiveFeed(raw);
 
-      // Dedupe on the values we actually use
-      const hash = JSON.stringify([kpis, !!ov.testMode, ov.weatherOverride ?? "", ov.timeOverride ?? ""]);
+      // include feed content in the hash for dedupe
+      const hash = JSON.stringify([kpis, !!ov.testMode, ov.weatherOverride ?? "", ov.timeOverride ?? "", feed]);
       if (hash !== lastHash) {
         lastHash = hash;
-        onData({ kpis, overrides: ov });
+        onData({ kpis, overrides: ov, feed });
       }
     } catch (e: any) {
       onError(e?.message ?? "Sheets error");

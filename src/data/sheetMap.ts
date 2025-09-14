@@ -3,18 +3,24 @@
 const TAB = "'GCDC Test Sheet'";
 
 export const sheetMap = {
-  sales:           `${TAB}!B2`,   // Sales
-  cogs:            `${TAB}!B3`,   // COGs
-  laborPct:        `${TAB}!B4`,   // Labor %
-  bankBalance:     `${TAB}!B5`,   // Bank Balance
-  fixedCost:       `${TAB}!B7`,   // Fixed Cost
-  onlineViews:     `${TAB}!B10`,  // Online Views
-  profit:          `${TAB}!B11`,  // Net Profit
-  reviewScore:     `${TAB}!B12`,  // Review Score
+  // KPI data (column B)
+  sales:           `${TAB}!B2`,
+  cogs:            `${TAB}!B3`,
+  laborPct:        `${TAB}!B4`,
+  bankBalance:     `${TAB}!B5`,
+  fixedCost:       `${TAB}!B7`,
+  onlineViews:     `${TAB}!B10`,
+  profit:          `${TAB}!B11`,
+  reviewScore:     `${TAB}!B12`,
+  accountsPayable: `${TAB}!B14`,  // this row is text today; parses 0 in M1 (ok)
 
-  // These two rows in your sheet currently hold text; they’ll parse to 0 (expected in M1).
-  accountsPayable: `${TAB}!B14`,  // Bank Transactions row (placeholder)
-  newItems:        `${TAB}!B15`,  // Social Media row (placeholder)
+  // ---- GCDC Live Feed ----
+  feed1Title: `${TAB}!A15`,
+  feed1Text:  `${TAB}!B15`,
+  feed2Title: `${TAB}!A16`,
+  feed2Text:  `${TAB}!B16`,
+  feed3Title: `${TAB}!A17`,
+  feed3Text:  `${TAB}!B17`,
 } as const;
 
 export type SheetKey = keyof typeof sheetMap;
@@ -29,5 +35,12 @@ export const allRanges: string[] = [
   sheetMap.profit,
   sheetMap.reviewScore,
   sheetMap.accountsPayable,
-  sheetMap.newItems,
+
+  // Live Feed
+  sheetMap.feed1Title,
+  sheetMap.feed1Text,
+  sheetMap.feed2Title,
+  sheetMap.feed2Text,
+  sheetMap.feed3Title,
+  sheetMap.feed3Text,
 ];

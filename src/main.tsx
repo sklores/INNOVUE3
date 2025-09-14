@@ -7,6 +7,7 @@ import "./styles/global.css";
 import "./styles/topbar.css";
 import "./styles/kpi.css";
 import "./styles/bottom.css";
+import "./styles/marquee.css";
 
 import { AppProvider } from "./app/state";
 

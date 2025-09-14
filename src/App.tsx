@@ -1,49 +1,51 @@
 // src/App.tsx
+import React from "react";
 import TopBar from "./scenic/TopBar";
-import { useLastUpdated, useLoadingError } from "./app/selectors";
-import KpiTiles from "./features/kpi/KpiTiles";
+import { useKpis } from "./app/selectors";
+import Marquee from "./features/marquee/Marquee";
+import "./styles/global.css";
+import "./styles/topbar.css";
+import "./styles/kpi.css";
+import "./styles/bottom.css";
 
 export default function App() {
-  const updated = useLastUpdated();
-  const { loading, error } = useLoadingError();
+  const k = useKpis();
 
   return (
     <div className="app">
-      {/* Scenic hero with splash + center-docked control pill */}
+      {/* Scenic Top Bar */}
       <TopBar />
 
-      {/* Status / debug header */}
-      <h1 style={{ marginTop: 36 }}>Innovue 3 — M1 Data Backbone</h1>
-
-      {error && (
-        <div
-          className="card"
-          style={{
-            padding: 12,
-            border: "1px solid #ffd1d1",
-            background: "#fff6f6",
-            marginBottom: 12,
-          }}
-        >
-          <strong>Sheets Error:</strong> {error}
+      {/* KPI Grid */}
+      <div className="kpi-grid">
+        {/* Sales - full width top row */}
+        <div className="kpi-tile sales">
+          <div className="kpi-label">Sales</div>
+          <div className="kpi-value">{k?.sales ?? "—"}</div>
         </div>
-      )}
 
-      <div className="card" style={{ padding: 16, marginBottom: 12 }}>
-        <div style={{ fontSize: 12, color: "var(--muted)" }}>Last Updated</div>
-        <div style={{ fontSize: 18, fontWeight: 700 }}>
-          {updated ? new Date(updated).toLocaleTimeString() : "—"}
+        {/* Middle grid: Fixed Cost + A/P */}
+        <div className="kpi-tile fixed-cost">
+          <div className="kpi-label">Fixed Cost</div>
+          <div className="kpi-value">{k?.fixedCost ?? "—"}</div>
+        </div>
+        <div className="kpi-tile ap">
+          <div className="kpi-label">A/P</div>
+          <div className="kpi-value">{k?.accountsPayable ?? "—"}</div>
+        </div>
+
+        {/* Profit - full width bottom row */}
+        <div className="kpi-tile profit">
+          <div className="kpi-label">Profit</div>
+          <div className="kpi-value">{k?.profit ?? "—"}</div>
         </div>
       </div>
 
-      {/* NEW: KPI tiles with full pastel spectrum bars */}
-      <KpiTiles />
-
-      {loading && (
-        <div style={{ marginTop: 16, color: "var(--muted)" }}>
-          Loading from Google Sheets…
-        </div>
-      )}
+      {/* Marquee with header */}
+      <div className="marquee-container">
+        <h2 className="marquee-header">GCDC Live Feed</h2>
+        <Marquee />
+      </div>
     </div>
   );
 }
