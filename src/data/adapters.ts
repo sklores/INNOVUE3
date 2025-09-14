@@ -1,5 +1,5 @@
-// src/data/adapters.ts
-// Normalize raw { [A1]: value } map into app state shapes expected by selectors.
+// Maps raw { [A1]: value } into the app shape expected by selectors/components.
+// M1 baseline: titles/texts only (A15–A17 / B15–B17). No chips yet.
 
 import { sheetMap } from "./sheetMap";
 
@@ -8,6 +8,7 @@ type Raw = Record<string, any>;
 export type FeedState = {
   titles: string[];
   texts: string[];
+  // stats is optional; LiveFeedPanel tolerates undefined
   stats?: {
     mentions?: number;
     newReviews?: number;
@@ -57,25 +58,5 @@ export function adapt(raw: Raw): AppData {
     toStr(raw[sheetMap.feed3Text]),
   ];
 
-  // Optional chips (A20–A22 names, B20–B22 values); tolerant to label wording
-  const label1 = toStr(raw[sheetMap.stat1Label]);
-  const label2 = toStr(raw[sheetMap.stat2Label]);
-  const label3 = toStr(raw[sheetMap.stat3Label]);
-  const val1 = toNum(raw[sheetMap.stat1Value]);
-  const val2 = toNum(raw[sheetMap.stat2Value]);
-  const val3 = toNum(raw[sheetMap.stat3Value]);
-
-  const stats: FeedState["stats"] = {};
-  const put = (label?: string, val?: number) => {
-    if (!label || val == null) return;
-    const l = label.toLowerCase();
-    if (l.includes("mention")) stats.mentions = val;
-    else if (l.includes("review")) stats.newReviews = val;
-    else if (l.includes("impression") || l.includes("click")) stats.impressions = val;
-  };
-  put(label1, val1);
-  put(label2, val2);
-  put(label3, val3);
-
-  return { kpis, feed: { titles, texts, stats } };
+  return { kpis, feed: { titles, texts } };
 }

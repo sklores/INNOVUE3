@@ -1,32 +1,14 @@
-// src/app/state.tsx
-// AppProvider with Sheets + (optional) Weather + shared clock.
-// Uses setInterval locally to avoid poller signature mismatches.
-
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { adapt, type AppData } from "../data/adapters";
 import { fetchAll } from "../data/sheetsClient";
 import * as cfg from "./config";
-
-// If you previously added a weather client, you can import it here.
-// For now we keep weather nullable to avoid introducing more deps.
-// import { fetchWeather, type Weather } from "../data/weatherClient";
-type Weather = {
-  tempC: number | null;
-  condition: string;
-  code: number | null;
-  isDay: boolean | null;
-  updated: number;
-} | null;
 
 type AppCtxType = {
   data: AppData | null;
   lastUpdated: number | null;
   loading: boolean;
   error: string | null;
-
-  now: number;          // epoch ms
-  weather: Weather;
-
+  now: number;                 // shared clock
   _refreshNow?: () => Promise<void>;
 };
 
@@ -36,7 +18,6 @@ const AppCtx = createContext<AppCtxType>({
   loading: true,
   error: null,
   now: Date.now(),
-  weather: null,
   _refreshNow: undefined,
 });
 
@@ -55,9 +36,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [lastUpdated, setLastUpdated] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
   const [now, setNow] = useState<number>(Date.now());
-  const [weather, setWeather] = useState<Weather>(null);
 
   const intervalMs = useMemo<number>(() => {
     const v =
@@ -74,7 +53,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const next = adapt(raw);
       setData(next);
       setLastUpdated(Date.now());
-      // If you have a weather client wired, load it here and setWeather(...)
       setError(null);
     } catch (err: unknown) {
       console.error("refresh error", err);
@@ -91,7 +69,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, []);
 
-  // Local polling without relying on an external poller helper
   useEffect(() => {
     let timer: ReturnType<typeof setInterval> | undefined;
     let stopped = false;
@@ -102,7 +79,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (loading) setLoading(false);
     };
 
-    // kick immediately, then interval
     void tick();
     timer = setInterval(tick, Math.max(1000, intervalMs | 0));
 
@@ -113,8 +89,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [intervalMs]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const value = useMemo(
-    () => ({ data, lastUpdated, loading, error, now, weather, _refreshNow: doRefresh }),
-    [data, lastUpdated, loading, error, now, weather]
+    () => ({ data, lastUpdated, loading, error, now, _refreshNow: doRefresh }),
+    [data, lastUpdated, loading, error, now]
   );
 
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>;
