@@ -2,7 +2,6 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 
-// Load styles (Manrope is in index.html)
 import "./styles/global.css";
 import "./styles/topbar.css";
 import "./styles/kpi.css";

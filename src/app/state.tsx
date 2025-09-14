@@ -4,13 +4,11 @@ import { fetchAll } from "../data/sheetsClient";
 import { startPoller } from "../data/poller";
 import * as cfg from "./config";
 
-/** Public context shape */
 type AppCtxType = {
   data: AppData | null;
   lastUpdated: number | null;
   loading: boolean;
   error: string | null;
-  /** Imperative refresh injected by provider */
   _refreshNow?: () => Promise<void>;
 };
 
@@ -22,20 +20,12 @@ const AppCtx = createContext<AppCtxType>({
   _refreshNow: undefined,
 });
 
-/**
- * Module-level proxy so legacy code can import { refreshNow } directly.
- * The provider sets this at runtime.
- */
+// Legacy-compat exported API expected elsewhere:
 let refreshNowImpl: (() => Promise<void>) | null = null;
-
-/** Legacy-compatible named export */
 export async function refreshNow(): Promise<void> {
   if (refreshNowImpl) return refreshNowImpl();
-  // No-op fallback to avoid crashes
   return Promise.resolve();
 }
-
-/** Legacy-compatible hook returning a "dispatch-like" object */
 export function useAppDispatch() {
   return { refreshNow };
 }
@@ -55,22 +45,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return Number.isFinite(v) ? Number(v) : 5000;
   }, []);
 
-  // Define the real refresh function and inject into both context and module proxy
   const doRefresh = async () => {
     try {
-      const raw = await fetchAll();
-      const next = adapt(raw);
+      const raw = await fetchAll();   // { [A1]: value } or {}
+      const next = adapt(raw);        // safe normalization
       setData(next);
       setLastUpdated(Date.now());
       setError(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("refresh error", err);
-      setError(String(err?.message ?? err));
+      setError(err instanceof Error ? err.message : String(err));
     }
   };
 
   useEffect(() => {
-    // make available to legacy imports
     refreshNowImpl = doRefresh;
     return () => {
       refreshNowImpl = null;

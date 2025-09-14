@@ -1,37 +1,33 @@
 import { allRanges } from "./sheetMap";
 
-// We try hardcoded.ts first (your previous setup), then env.
-// This file never throws — it returns {} if anything is missing/fails.
-
-function opt(name: string, v: any): string | undefined {
+// Non-fatal client: returns {} if creds missing or request fails.
+function opt(v: any): string | undefined {
   if (!v) return undefined;
   const s = String(v).trim();
   return s.length ? s : undefined;
 }
 
 export async function fetchAll(): Promise<Record<string, any>> {
-  // Try to read from hardcoded.ts if present
   let apiKey: string | undefined;
   let sheetId: string | undefined;
   let sheetName: string | undefined;
+
   try {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     const hardcoded = await import("./hardcoded");
-    apiKey = opt("GOOGLE_API_KEY", (hardcoded as any).GOOGLE_API_KEY);
-    sheetId = opt("GOOGLE_SHEET_ID", (hardcoded as any).GOOGLE_SHEET_ID);
-    sheetName = opt("SHEET_NAME", (hardcoded as any).SHEET_NAME);
+    apiKey = opt((hardcoded as any).GOOGLE_API_KEY);
+    sheetId = opt((hardcoded as any).GOOGLE_SHEET_ID);
+    sheetName = opt((hardcoded as any).SHEET_NAME);
   } catch {
-    // ignore
+    /* ignore */
   }
 
-  // Fallback to Vite env (if you’re using .env)
-  apiKey = apiKey ?? opt("VITE_GOOGLE_API_KEY", (import.meta as any)?.env?.VITE_GOOGLE_API_KEY);
-  sheetId = sheetId ?? opt("VITE_GOOGLE_SHEET_ID", (import.meta as any)?.env?.VITE_GOOGLE_SHEET_ID);
-  sheetName = sheetName ?? opt("VITE_SHEET_NAME", (import.meta as any)?.env?.VITE_SHEET_NAME);
+  apiKey = apiKey ?? opt((import.meta as any)?.env?.VITE_GOOGLE_API_KEY);
+  sheetId = sheetId ?? opt((import.meta as any)?.env?.VITE_GOOGLE_SHEET_ID);
+  sheetName = sheetName ?? opt((import.meta as any)?.env?.VITE_SHEET_NAME);
 
   if (!apiKey || !sheetId || !sheetName) {
-    // Missing creds — return empty map so app still renders
     return {};
   }
 
