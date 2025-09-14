@@ -1,140 +1,150 @@
-/* src/styles/marquee.css */
+/* Innovue 3 — Marquee visuals (M1)
+   Title + Last Updated, centered tabs, tall blue rail with smooth scroll.
+   Typography inherits Manrope globally. Only .lf-* classes are used here. */
 
-/* Panel container (tall, standalone) */
-.lf {
-    padding: 0;
-    border-radius: 18px;
-    box-shadow: 0 8px 28px rgba(16,24,40,0.12);
-    overflow: hidden;
-    margin-top: 16px;
+   :root{
+    --lf-panel:#eef2f6;
+    --lf-border:#d6dde6;
+    --lf-shadow:0 6px 22px rgba(20,24,40,.14);
+  
+    --lf-pill-bg:#ffffff;
+    --lf-pill-fg:#0f172a;
+    --lf-pill-active-bg:#0f1a2b;
+    --lf-pill-active-fg:#ffffff;
+  
+    --lf-rail-bg:#dcecff;
+    --lf-rail-border:#c9defd;
+  
+    --lf-chip-bg:#f5f7fb;
+    --lf-chip-dot:#18c26e;
   }
   
-  /* Header: Last Updated (left) + Title (center) + Tabs (right) */
-  .lf-header {
-    display: grid;
-    grid-template-columns: 1fr auto auto;
-    align-items: center;
-    gap: 10px;
-    padding: 12px 16px;
-    border-bottom: 1px solid rgba(16,24,40,0.08);
-    background: #ffffff;
+  /* Card */
+  .lf.card{
+    background:var(--lf-panel);
+    border:1px solid var(--lf-border);
+    border-radius:18px;
+    box-shadow:var(--lf-shadow);
+    color:#0b1220;
+    padding:18px;
+    display:grid;
+    gap:12px;
   }
   
-  .lf-updated {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
+  /* Title row */
+  .lf-titlebar{
+    display:grid;
+    grid-template-columns:1fr 44px;
+    align-items:center;
+    gap:12px;
   }
-  .lf-upd-label {
-    font-size: 12px;
-    color: var(--muted);
+  .lf-title-left{
+    display:inline-grid;
+    grid-auto-flow:column;
+    align-items:center;
+    gap:10px;
   }
-  .lf-upd-time {
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--ink);
-  }
-  
-  .lf-title-wrap {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    justify-self: center;
-  }
-  .lf-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 999px;
-    background: #0ea5a5;
-    box-shadow: 0 0 0 3px rgba(14,165,165,0.15);
-  }
-  .lf-title {
-    font-weight: 800;
-    letter-spacing: 0.3px;
-    font-size: 14px;
-    color: var(--ink);
-    opacity: 0.9;
+  .lf-title-main{ font-weight:800; font-size:16px; letter-spacing:.2px; }
+  .lf-dot{ width:8px; height:8px; border-radius:50%; background:#19c26e; box-shadow:0 0 0 2px rgba(25,194,110,.18); }
+  .lf-upd-label{ color:#667085; font-size:13px; font-weight:600; }
+  .lf-upd-time{ font-weight:800; letter-spacing:.2px; }
+  .lf-badge{ display:grid; place-items:center; }
+  .lf-badge__medal{
+    width:36px; height:36px; border-radius:50%;
+    background:radial-gradient(circle at 30% 30%, #ffe585, #f3b94a 60%, #c88b2b 100%);
+    box-shadow:inset 0 0 0 2px rgba(0,0,0,.05), 0 2px 2px rgba(0,0,0,.12);
   }
   
-  .lf-tabs {
-    display: inline-flex;
-    gap: 8px;
-    justify-self: end;
-    flex-wrap: wrap;
+  /* Tabs (centered) */
+  .lf-tabs{ display:flex; justify-content:center; gap:10px; flex-wrap:wrap; }
+  .lf-tab{
+    appearance:none;
+    border:1px solid var(--lf-border);
+    background:var(--lf-pill-bg);
+    color:var(--lf-pill-fg);
+    border-radius:999px;
+    padding:8px 14px;
+    font-weight:700;
+    font-size:14px;
+    line-height:1;
+    cursor:pointer;
+    transition:transform .06s ease, background .2s ease, color .2s ease, border-color .2s ease;
   }
-  .lf-tab {
-    font: inherit;
-    padding: 8px 12px;
-    border-radius: 999px;
-    border: 1px solid rgba(16,24,40,0.12);
-    background: #fff;
-    color: var(--ink);
-    cursor: pointer;
-    min-height: 34px;
+  .lf-tab[aria-selected="true"]{
+    background:var(--lf-pill-active-bg);
+    color:var(--lf-pill-active-fg);
+    border-color:var(--lf-pill-active-bg);
   }
-  .lf-tab--active {
-    background: #0b2b49;
-    border-color: #0b2b49;
-    color: #fff;
+  .lf-tab:hover{ transform:translateY(-1px); }
+  
+  /* Tall blue rail — seamless dual-track scroll */
+  .lf-rail{
+    position:relative;
+    background:var(--lf-rail-bg);
+    border:1px solid var(--lf-rail-border);
+    border-radius:12px;
+    height:56px;
+    overflow:hidden;
+    display:block;
+  }
+  .lf-track{
+    position:absolute;
+    inset:0;
+    display:inline-flex;
+    align-items:center;
+    white-space:nowrap;
+    animation:lf-marquee 22s linear infinite;
+  }
+  .lf-track--alt{
+    animation-name:lf-marquee-alt;
+  }
+  .lf-gap{ display:inline-block; width:48px; }
+  .lf-pill{
+    display:inline-block;
+    border:1px solid var(--lf-rail-border);
+    background:#fff;
+    color:#0b2540;
+    font-weight:800;
+    letter-spacing:.2px;
+    padding:10px 14px;
+    border-radius:10px;
+    margin-left:12px;
   }
   
-  /* Body: tall scroller */
-  .lf-body {
-    position: relative;
-    overflow: hidden;
-    background: linear-gradient(180deg, #fbfdff 0%, #f7fbff 100%);
-    padding: 14px 0 16px 0;
-    height: clamp(220px, 28vh, 320px);
+  /* Chips row (optional) */
+  .lf-stats{
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    flex-wrap:wrap;
+  }
+  .lf-chip{
+    background:var(--lf-chip-bg);
+    border:1px solid var(--lf-border);
+    border-radius:999px;
+    padding:8px 12px;
+    font-weight:700;
+    display:inline-grid;
+    grid-auto-flow:column;
+    gap:6px;
+    align-items:center;
+    color:#0b1220;
+  }
+  .lf-chip .dot{ width:8px; height:8px; border-radius:50%; background:#c5c8d1; }
+  .lf-chip .dot.ok{ background:var(--lf-chip-dot); }
+  
+  /* Keyframes */
+  @keyframes lf-marquee{
+    0%{ transform:translateX(0); }
+    100%{ transform:translateX(-50%); }
+  }
+  @keyframes lf-marquee-alt{
+    0%{ transform:translateX(-50%); }
+    100%{ transform:translateX(0); }
   }
   
-  /* Two synchronized tracks for seamless loop */
-  .lf-track {
-    --lf-speed: 24000ms;
-    display: inline-flex;
-    align-items: center;
-    gap: 22px;
-    white-space: nowrap;
-    will-change: transform;
-    animation: lf-scroll var(--lf-speed) linear infinite;
-    padding-left: 16px;
-  }
-  .lf-track--alt {
-    position: absolute;
-    left: 0;
-    top: 0;
-    animation-delay: calc(var(--lf-speed) / 2);
-  }
-  
-  @keyframes lf-scroll {
-    from { transform: translateX(0); }
-    to   { transform: translateX(-50%); }
-  }
-  
-  /* Pause on hover/focus */
-  .lf-body:hover .lf-track,
-  .lf-body:focus-within .lf-track {
-    animation-play-state: paused;
-  }
-  
-  /* Chips: larger, can wrap to 2 lines for readability */
-  .lf-chip {
-    display: inline-flex;
-    align-items: center;
-    max-width: 60ch;
-    white-space: normal;
-    line-height: 1.25;
-    padding: 10px 14px;
-    border-radius: 14px;
-    background: #f4f7fb;
-    color: var(--ink);
-    font-weight: 600;
-    font-size: 14px;
-    box-shadow: inset 0 0 0 1px rgba(16,24,40,0.08);
-  }
-  
-  /* Spacer between duplicated runs */
-  .lf-gap {
-    display: inline-block;
-    width: 40px;
-    height: 1px;
+  /* Responsive */
+  @media (max-width:560px){
+    .lf-titlebar{ grid-template-columns:1fr; }
+    .lf-badge{ display:none; }
   }
