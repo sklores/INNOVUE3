@@ -1,111 +1,75 @@
 // src/data/adapters.ts
+// Normalizes raw Sheets values into app state shapes.
+
 import { sheetMap } from "./sheetMap";
 
-export type KPIData = {
-  sales: number;
-  profit: number;
-  laborPct: number;        // 0..100
-  cogs: number;
-  onlineViews: number;
-  reviewScore: number;
-  fixedCost: number;
-  accountsPayable: number;
-  bankBalance: number;
-  newItems: number;        // unused today (0 default)
-  updatedAt: number;
+type Raw = Record<string, string | number | undefined>;
+
+export type FeedState = {
+  titles: string[];
+  texts: string[];
+  stats?: {
+    mentions?: number;
+    newReviews?: number;
+    impressions?: number;
+  };
 };
 
-export type Overrides = {
-  testMode: boolean;
-  weatherOverride?: "clear" | "cloudy" | "rain" | "thunderstorm" | "";
-  timeOverride?: "day" | "night" | "auto" | "";
-  laborOverride?: number;
-  salesOverride?: number;
-  profitOverride?: number;
-  bankOverride?: number;
-  newItemsOverride?: number;
+export type AppData = {
+  kpis: Record<string, number>;
+  feed: FeedState;
+  // ...other domains like overrides if you use them
 };
 
-export type LiveFeed = {
-  titles: [string, string, string]; // A15, A16, A17
-  texts:  [string, string, string]; // B15, B16, B17
-};
-
-function num(s?: string): number | undefined {
-  if (!s) return undefined;
-  const cleaned = s.replace(/[$,%\s,]/g, "");
-  const n = parseFloat(cleaned);
+function toNum(v: any): number | undefined {
+  if (v === null || v === undefined) return undefined;
+  const n = Number(String(v).replace(/[^\d.-]/g, ""));
   return Number.isFinite(n) ? n : undefined;
 }
-function money(s?: string): number { return num(s) ?? 0; }
-function percent(s?: string): number {
-  const n = num(s);
-  if (n === undefined) return 0;
-  return n <= 1 ? n * 100 : n; // allow 0.42 => 42%
-}
-function str(s?: string): string { return (s ?? "").toString().trim(); }
 
-// ----------------- KPI normalization -----------------
-export function adaptKpis(batch: Record<string, string | undefined>): KPIData {
-  const now = Date.now();
-  return {
-    sales:           money(batch[sheetMap.sales]),
-    profit:          money(batch[sheetMap.profit]),
-    laborPct:        Math.max(0, Math.min(100, percent(batch[sheetMap.laborPct]))),
-    cogs:            money(batch[sheetMap.cogs]),
-    onlineViews:     money(batch[sheetMap.onlineViews]),
-    reviewScore:     money(batch[sheetMap.reviewScore]),
-    fixedCost:       money(batch[sheetMap.fixedCost]),
-    accountsPayable: money(batch[sheetMap.accountsPayable]),
-    bankBalance:     money(batch[sheetMap.bankBalance]),
-    newItems:        0,
-    updatedAt: now,
-  };
-}
+export function adapt(raw: Raw): AppData {
+  // ---- KPIs (minimal example; keep your existing mapping as needed) ----
+  const kpis: Record<string, number> = {};
+  const kpiKeys = [
+    "sales",
+    "cogs",
+    "laborPct",
+    "bankBalance",
+    "primeCost",
+    "fixedCost",
+    "onlineViews",
+    "netProfit",
+    "reviewScore",
+  ] as const;
+  for (const key of kpiKeys) {
+    const r = sheetMap[key];
+    const num = toNum(raw[r]);
+    if (num !== undefined) kpis[key] = num;
+  }
 
-// ----------------- Live Feed -----------------
-export function adaptLiveFeed(batch: Record<string, string | undefined>): LiveFeed {
-  const titles: [string, string, string] = [
-    str(batch[sheetMap.feed1Title]),
-    str(batch[sheetMap.feed2Title]),
-    str(batch[sheetMap.feed3Title]),
+  // ---- Live feed titles/texts ----
+  const titles = [
+    String(raw[sheetMap.feed1Title] ?? "").trim(),
+    String(raw[sheetMap.feed2Title] ?? "").trim(),
+    String(raw[sheetMap.feed3Title] ?? "").trim(),
   ];
-  const texts: [string, string, string] = [
-    str(batch[sheetMap.feed1Text]),
-    str(batch[sheetMap.feed2Text]),
-    str(batch[sheetMap.feed3Text]),
+  const texts = [
+    String(raw[sheetMap.feed1Text] ?? "").trim(),
+    String(raw[sheetMap.feed2Text] ?? "").trim(),
+    String(raw[sheetMap.feed3Text] ?? "").trim(),
   ];
-  return { titles, texts };
-}
 
-// ----------------- Overrides -----------------
-export function adaptOverrides(batch: Record<string, string | undefined>): Overrides {
-  const sm: any = sheetMap as any;
-  if (!sm.overrides) return { testMode: false };
-  const get = (r: string) => (batch[r]?.trim() ?? "");
-  const tm = get(sm.overrides.testMode).toLowerCase();
-  const toNum = (r: string) => (num(get(r)) ?? undefined);
+  // ---- New: stats chips (A20–A22 names, B20–B22 values) ----
+  const statMentions = toNum(raw[sheetMap.statMentionsValue]);
+  const statNewReviews = toNum(raw[sheetMap.statNewReviewsValue]);
+  const statImpressions = toNum(raw[sheetMap.statImpressionsValue]);
 
-  return {
-    testMode: tm === "true" || tm === "1" || tm === "yes",
-    weatherOverride: (get(sm.overrides.weatherOverride).toLowerCase() as any) || undefined,
-    timeOverride:    (get(sm.overrides.timeOverride).toLowerCase() as any) || undefined,
-    laborOverride:   toNum(sm.overrides.laborOverride),
-    salesOverride:   toNum(sm.overrides.salesOverride),
-    profitOverride:  toNum(sm.overrides.profitOverride),
-    bankOverride:    toNum(sm.overrides.bankOverride),
-    newItemsOverride: toNum(sm.overrides.newItemsOverride),
+  const feed: FeedState = { titles, texts };
+  feed.stats = {
+    mentions: statMentions,
+    newReviews: statNewReviews,
+    impressions: statImpressions,
   };
-}
 
-export function mergeOverrides(k: KPIData, o: Overrides): KPIData {
-  if (!o?.testMode) return k;
-  return {
-    ...k,
-    laborPct:    o.laborOverride   ?? k.laborPct,
-    sales:       o.salesOverride   ?? k.sales,
-    profit:      o.profitOverride  ?? k.profit,
-    bankBalance: o.bankOverride    ?? k.bankBalance,
-    newItems:    o.newItemsOverride ?? k.newItems,
-  };
+  return { kpis, feed };
 }
