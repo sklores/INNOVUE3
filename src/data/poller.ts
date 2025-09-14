@@ -1,51 +1,25 @@
-// src/data/poller.ts
-import { adaptKpis, adaptOverrides, mergeOverrides, adaptLiveFeed, type KPIData, type Overrides, type LiveFeed } from "./adapters";
-import { allRanges } from "./sheetMap";
-import { fetchBatchValues } from "./sheetsClient";
+export type StopFn = () => void;
 
-export type OnData = (payload: { kpis: KPIData; overrides: Overrides; feed: LiveFeed }) => void;
-export type OnError = (message: string) => void;
-
-export type PollerConfig = {
-  sheetsMs: number;
-  timeMs: number;
-  weatherMs: number;
-};
-
-export function startPoller(cfg: PollerConfig, onData: OnData, onError: OnError) {
-  let lastHash = "";
-  let ctrl: AbortController | null = null;
+export function startPoller(intervalMs: number, fn: () => Promise<void>): StopFn {
   let stopped = false;
+  let timer: ReturnType<typeof setTimeout> | undefined;
 
-  async function tickSheets() {
+  const tick = async () => {
     if (stopped) return;
     try {
-      ctrl?.abort();
-      ctrl = new AbortController();
-
-      const raw = await fetchBatchValues(allRanges, ctrl.signal);
-      const base = adaptKpis(raw);
-      const ov   = adaptOverrides(raw) ?? { testMode: false };
-      const kpis = mergeOverrides(base, ov);
-      const feed = adaptLiveFeed(raw);
-
-      // include feed content in the hash for dedupe
-      const hash = JSON.stringify([kpis, !!ov.testMode, ov.weatherOverride ?? "", ov.timeOverride ?? "", feed]);
-      if (hash !== lastHash) {
-        lastHash = hash;
-        onData({ kpis, overrides: ov, feed });
+      await fn();
+    } catch (err) {
+      console.error("poller tick error:", err);
+    } finally {
+      if (!stopped) {
+        timer = setTimeout(tick, Math.max(1000, intervalMs | 0));
       }
-    } catch (e: any) {
-      onError(e?.message ?? "Sheets error");
     }
-  }
+  };
 
-  tickSheets();
-  const sheetsId = setInterval(tickSheets, cfg.sheetsMs);
-
+  void tick();
   return () => {
     stopped = true;
-    ctrl?.abort();
-    clearInterval(sheetsId);
+    if (timer) clearTimeout(timer);
   };
 }

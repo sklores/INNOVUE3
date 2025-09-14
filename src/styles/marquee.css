@@ -1,5 +1,3 @@
-/* Innovue 3 — Live Feed (taller rail, smooth scroll, Manrope inherited) */
-
 :root{
     --lf-panel:#eef2f6;
     --lf-border:#d6dde6;
@@ -17,7 +15,6 @@
     --lf-chip-dot:#18c26e;
   }
   
-  /* Card */
   .lf.card{
     background:var(--lf-panel);
     border:1px solid var(--lf-border);
@@ -29,7 +26,6 @@
     gap:12px;
   }
   
-  /* Title row */
   .lf-titlebar{
     display:grid;
     grid-template-columns:1fr 44px;
@@ -53,7 +49,6 @@
     box-shadow:inset 0 0 0 2px rgba(0,0,0,.05), 0 2px 2px rgba(0,0,0,.12);
   }
   
-  /* Tabs */
   .lf-tabs{ display:flex; justify-content:center; gap:10px; flex-wrap:wrap; }
   .lf-tab{
     appearance:none;
@@ -75,7 +70,6 @@
   }
   .lf-tab:hover{ transform:translateY(-1px); }
   
-  /* Rail — seamless dual-track scroll */
   .lf-rail{
     position:relative;
     background:var(--lf-rail-bg);
@@ -109,7 +103,6 @@
     margin-left:12px;
   }
   
-  /* Chips */
   .lf-stats{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
   .lf-chip{
     background:var(--lf-chip-bg);
@@ -126,7 +119,6 @@
   .lf-chip .dot{ width:8px; height:8px; border-radius:50%; background:#c5c8d1; }
   .lf-chip .dot.ok{ background:var(--lf-chip-dot); }
   
-  /* Keyframes */
   @keyframes lf-marquee{
     0%{ transform:translateX(0); }
     100%{ transform:translateX(-50%); }
@@ -136,7 +128,6 @@
     100%{ transform:translateX(0); }
   }
   
-  /* Responsive */
   @media (max-width:560px){
     .lf-titlebar{ grid-template-columns:1fr; }
     .lf-badge{ display:none; }

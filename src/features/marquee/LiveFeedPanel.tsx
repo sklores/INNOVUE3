@@ -1,29 +1,22 @@
-// src/features/marquee/LiveFeedPanel.tsx
-// Innovue 3 — Live Feed (scrolling rail + chips from A20–A22/B20–B22)
-
 import React, { useEffect, useMemo, useState } from "react";
 import { useFeed, useLastUpdated } from "../../app/selectors";
 
-/** Split on sequences of dashes / long dashes */
 const SPLIT_REGEX = /-{3,}|—{2,}|–{2,}/g;
 
 type Stat = { label: string; value: number };
 
 const LiveFeedPanel: React.FC = () => {
-  const feed = useFeed();                  // { titles: string[], texts: string[], stats?: { ... } }
-  const updated = useLastUpdated();        // ISO string or number
+  const feed = useFeed();
+  const updated = useLastUpdated();
 
-  // tab (remembered)
   const [idx, setIdx] = useState<number>(() => {
     const saved = Number(localStorage.getItem("liveFeedTab") ?? "0");
     return Number.isFinite(saved) ? saved : 0;
   });
   useEffect(() => localStorage.setItem("liveFeedTab", String(idx)), [idx]);
 
-  // tab titles (A15–A17)
   const titles = feed?.titles ?? ["Social", "Reviews", "Bank"];
 
-  // build scrolling line from B15–B17 (current tab)
   const raw = (feed?.texts?.[idx] ?? "").trim();
   const parts = useMemo(() => {
     if (!raw) return [];
@@ -34,8 +27,6 @@ const LiveFeedPanel: React.FC = () => {
   }, [raw]);
   const line = parts.join(" • ");
 
-  // chips: try feed.stats first (if adapter already provides),
-  // else fall back to three well-known names to avoid empty UI.
   const stats: Stat[] = useMemo(() => {
     const s: any = (feed as any)?.stats || {};
     const out: Stat[] = [];
@@ -49,7 +40,6 @@ const LiveFeedPanel: React.FC = () => {
 
   return (
     <section className="lf card" role="region" aria-label="GCDC Live Feed">
-      {/* Title + last updated */}
       <div className="lf-titlebar">
         <div className="lf-title-left">
           <span className="lf-title-main">GCDC Live Feed</span>
@@ -62,7 +52,6 @@ const LiveFeedPanel: React.FC = () => {
         </div>
       </div>
 
-      {/* Tabs (A15–A17) */}
       <div className="lf-tabs" role="tablist" aria-label="Feed toggles">
         {titles.map((t, i) => (
           <button
@@ -78,7 +67,6 @@ const LiveFeedPanel: React.FC = () => {
         ))}
       </div>
 
-      {/* Seamless dual-track scroll — one tall rail */}
       <div className="lf-rail">
         <div className="lf-track">
           <span className="lf-pill">{line || "No items yet"}</span>
@@ -92,7 +80,6 @@ const LiveFeedPanel: React.FC = () => {
         </div>
       </div>
 
-      {/* Chips (Mentions / New Reviews / Impressions) when present */}
       {stats.length > 0 && (
         <div className="lf-stats">
           {stats.map((s, i) => (

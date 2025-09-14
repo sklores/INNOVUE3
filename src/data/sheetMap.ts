@@ -1,8 +1,5 @@
-// src/data/sheetMap.ts
-// A1 mappings used by the Sheets client + adapters
-
 export const sheetMap = {
-    // ---- KPIs (keep your existing keys as-is) ----
+    // KPIs
     sales: "B2",
     cogs: "B3",
     laborPct: "B4",
@@ -13,7 +10,7 @@ export const sheetMap = {
     netProfit: "B11",
     reviewScore: "B12",
   
-    // ---- Live feed (titles/texts) ----
+    // Live feed tabs/texts
     feed1Title: "A15",
     feed1Text: "B15",
     feed2Title: "A16",
@@ -21,13 +18,13 @@ export const sheetMap = {
     feed3Title: "A17",
     feed3Text: "B17",
   
-    // ---- Social stats (chips) ----
-    stat1Label: "A20",  // e.g., "Mentions"
-    stat1Value: "B20",  // e.g., 27
-    stat2Label: "A21",  // e.g., "New Reviews"
-    stat2Value: "B21",  // e.g., 5
-    stat3Label: "A22",  // e.g., "Impressions"
-    stat3Value: "B22",  // e.g., 92
+    // Chips (names + values)
+    stat1Label: "A20", // Mentions
+    stat1Value: "B20",
+    stat2Label: "A21", // New Reviews
+    stat2Value: "B21",
+    stat3Label: "A22", // Impressions
+    stat3Value: "B22",
   } as const;
   
   export const allRanges: string[] = Object.values(sheetMap);
