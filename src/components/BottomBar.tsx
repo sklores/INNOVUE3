@@ -1,91 +1,55 @@
-import { useState } from "react";
-import { useAppContext } from "./state";
-
-/** Live feed (titles/texts) for the marquee */
-export function useFeed() {
-  const { data } = useAppContext();
-  return data?.feed;
-}
-
-/** Last successful Sheets fetch (epoch ms) */
-export function useLastUpdated(): number | null {
-  const { lastUpdated } = useAppContext();
-  return lastUpdated;
-}
-
-/** KPIs for tiles (numeric map) */
-export function useKpis() {
-  const { data } = useAppContext();
-  return data?.kpis ?? {};
-}
-
-/** Shared clock (epoch ms) */
-export function useDateTime(): number {
-  const { now } = useAppContext();
-  return now;
-}
+import React, { useMemo } from "react";
+// ✅ Import from app selectors (not "./state")
+import { useDateTime, useLastUpdated, useWeather } from "../app/selectors";
 
 /**
- * Restored for BottomBar compatibility.
- * Weather wiring will be added later; for now this returns null
- * so any consumer must handle “no weather” safely.
+ * Sticky bottom status bar (safe):
+ *  - Date from shared clock
+ *  - Weather (null-safe; shows "—" if unavailable)
+ *  - API status (green once Sheets has returned at least once)
+ * No refresh button.
  */
-export function useWeather(): unknown | null {
-  return null;
-}
+const BottomBar: React.FC = () => {
+  const now = useDateTime();
+  const updated = useLastUpdated();
+  const wx = useWeather(); // unknown | null (stub for now)
 
-/**
- * REQUIRED BY SegmentedControl:
- * Minimal local state hook so the control can mount.
- * Values: "day" | "week" | "month".
- */
-export function useViewRange(): [("day" | "week" | "month"), (v: "day" | "week" | "month") => void] {
-  const [range, setRange] = useState<"day" | "week" | "month">("day");
-  return [range, setRange];
-}
+  const dateLabel = useMemo(() => {
+    const d = new Date(now);
+    return d.toLocaleDateString(undefined, {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    });
+  }, [now]);
 
-/**
- * Robust tile color helper:
- * Accepts any input; tries to coerce to number; returns neutral if not a number.
- */
-export function tileColor(value: unknown, opts?: { invert?: boolean }): string {
-  const n = coerceNumber(value);
-  if (n == null) return "#cfd8e3"; // neutral blue-gray
+  const weatherLabel = useMemo(() => {
+    if (!wx || typeof wx !== "object") return "—";
+    const obj = wx as Record<string, unknown>;
+    const condition =
+      typeof obj.condition === "string" && obj.condition.trim().length
+        ? (obj.condition as string)
+        : "—";
+    const t =
+      typeof obj.tempC === "number" && Number.isFinite(obj.tempC as number)
+        ? Math.round(obj.tempC as number)
+        : null;
+    return t != null ? `${condition} · ${t}°` : condition;
+  }, [wx]);
 
-  const clamped = Math.max(0, Math.min(100, n));
-  const g = Math.round((clamped / 100) * 200 + 30);
-  const r = Math.round(((100 - clamped) / 100) * 200 + 30);
-  const base = `rgb(${r}, ${g}, 80)`;
-  return opts?.invert ? `rgb(${g}, ${r}, 80)` : base;
-}
+  const apiOk = Boolean(updated);
 
-function coerceNumber(v: unknown): number | null {
-  if (typeof v === "number" && Number.isFinite(v)) return v;
-  if (typeof v === "string") {
-    const cleaned = v.replace(/[^\d.-]/g, "");
-    const parsed = Number(cleaned);
-    if (Number.isFinite(parsed)) return parsed;
-  }
-  if (typeof v === "object" && v !== null) {
-    // @ts-expect-error best-effort extraction from common shapes
-    const maybe = (v.value ?? v.val ?? v.amount) as unknown;
-    if (typeof maybe === "number" && Number.isFinite(maybe)) return maybe;
-    if (typeof maybe === "string") {
-      const cleaned = maybe.replace(/[^\d.-]/g, "");
-      const parsed = Number(cleaned);
-      if (Number.isFinite(parsed)) return parsed;
-    }
-  }
-  return null;
-}
+  return (
+    <footer className="bb sticky-bar" aria-label="Bottom Status">
+      <div className="bb inner">
+        <div className="bb pill">{dateLabel}</div>
+        <div className="bb pill">{weatherLabel}</div>
+        <div className={`bb pill ${apiOk ? "ok" : ""}`}>
+          {apiOk ? "API OK" : "API —"}
+        </div>
+      </div>
+    </footer>
+  );
+};
 
-/** Scenic effects trigger token */
-export function useBeamTriggerToken(): number {
-  const t = useLastUpdated();
-  return t ?? 0;
-}
-
-/** Splash overlay toggle (off by default) */
-export function useSplashActive(): boolean {
-  return false;
-}
+export default BottomBar;
