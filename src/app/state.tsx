@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { adapt, type AppData } from "../data/adapters";
 import { fetchAll } from "../data/sheetsClient";
+import { fetchWeather, type Weather } from "../data/weatherClient";
 import * as cfg from "./config";
 
 /**
@@ -10,8 +11,7 @@ import * as cfg from "./config";
  * - loading/error: basic flags
  * - now: shared clock tick (for components that show time)
  * - _refreshNow: imperative refresh used by some legacy callers
- *
- * NOTE: No weather here. No extra fields. This keeps the contract tight.
+ * - weather: latest Weather from weatherClient
  */
 type AppCtxType = {
   data: AppData | null;
@@ -19,6 +19,7 @@ type AppCtxType = {
   loading: boolean;
   error: string | null;
   now: number;
+  weather: Weather | null;
   _refreshNow?: () => Promise<void>;
 };
 
@@ -28,6 +29,7 @@ const AppCtx = createContext<AppCtxType>({
   loading: true,
   error: null,
   now: Date.now(),
+  weather: null,
   _refreshNow: undefined,
 });
 
@@ -52,6 +54,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [now, setNow] = useState<number>(Date.now());
+  const [weather, setWeather] = useState<Weather | null>(null);
 
   // Poll interval (ms) from config with safe fallback
   const intervalMs = useMemo<number>(() => {
@@ -108,9 +111,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, [intervalMs]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Weather polling loop
+  useEffect(() => {
+    let timer: ReturnType<typeof setInterval> | undefined;
+    let stopped = false;
+
+    const tick = async () => {
+      if (stopped) return;
+      const w = await fetchWeather();
+      setWeather(w);
+    };
+
+    void tick();
+    timer = setInterval(tick, Math.max(60_000, intervalMs | 0));
+
+    return () => {
+      stopped = true;
+      if (timer) clearInterval(timer);
+    };
+  }, [intervalMs]);
+
   const value = useMemo(
-    () => ({ data, lastUpdated, loading, error, now, _refreshNow: doRefresh }),
-    [data, lastUpdated, loading, error, now]
+    () => ({ data, lastUpdated, loading, error, now, weather, _refreshNow: doRefresh }),
+    [data, lastUpdated, loading, error, now, weather]
   );
 
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>;
