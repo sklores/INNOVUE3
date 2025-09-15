@@ -25,6 +25,12 @@ export function useDateTime(): number {
   return now;
 }
 
+/** Latest weather data */
+export function useWeather() {
+  const { weather } = useAppContext();
+  return weather;
+}
+
 /**
  * REQUIRED BY SegmentedControl:
  * Minimal local state hook so the control can mount.
